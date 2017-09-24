@@ -1,0 +1,35 @@
+//Souliss
+
+
+Switch RiscaAuto 	"Impostazione Riscaldamento" 								<heating>			(gLocaleTecnico, gSouliss)
+Switch SoulissIn1_0 "Ingresso stato impianto di sicurezza" 						<light>				(gLocaleTecnico, gSouliss) 							{souliss="T13:0:0", autoupdate="false"}
+Switch SoulissIn2_0 "Ingresso termostato locale" 								<light>				(gLocaleTecnico, gSouliss) 							{souliss="T13:0:1", autoupdate="false"}
+Switch SoulissIn3_0 "Ingresso 3" 												<light>				(gLocaleTecnico, gSouliss) 							{souliss="T13:0:2", autoupdate="false"}
+Switch SoulissIn4_0 "Ingresso 4" 												<light>				(gLocaleTecnico, gSouliss) 							{souliss="T13:0:3", autoupdate="false"}
+Switch SoulissRele1_0 "Stato impianto di sicurezza [MAP(souliss.map):%s]" 		<light>				(gLocaleTecnico, gSouliss) 							{souliss="T11:0:4", autoupdate="false"}
+Switch SoulissRele2_0 "Relè valvola piano terra" 								<groundfloor>		(gLocaleTecnico, gSouliss) 							{souliss="T11:0:5", autoupdate="false"}
+Switch SoulissRele3_0 "Relè 3" 													<light>				(gLocaleTecnico, gSouliss) 							{souliss="T11:0:6", autoupdate="false"}
+Switch SoulissRele4_0 "Relè 4" 													<light>				(gLocaleTecnico, gSouliss, G_PresenceSimulation) 	{souliss="T11:0:7", autoupdate="false"}
+Number SoulissUmidity_0		"Umidità stanza [%.1f %%]" 							<humidity> 			(gLocaleTecnico, gSouliss, gUmidita)					{souliss="T53:0:8"}
+Number SoulissTemperature_0	"Temperatura stanza [%.1f °C]" 						<temperature> 		(gLocaleTecnico, gSouliss, avgTemperatura, gTemperatura) {souliss="T52:0:10"}
+Number SetPoint1 "SetPoint [%.1f °C]" 											<settings>
+Number HEALTHNodo0 	"Health Node 0 [%.1f]" 										<clock> 			(gLocaleTecnico, gSouliss) 							{souliss="D98:0:998"}
+String TIMESTAMP_Nodo0 "Update Node 0 [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]" 	<clock> 			(gLocaleTecnico, gSouliss) 							{souliss="D99:0:999"}
+
+
+Switch SoulissIn1_1 		"Stato ingresso 1" 											<light>					(gLocaleTecnico, gSouliss) 							{souliss="T13:1:4", autoupdate="false"}
+Switch SoulissRele1_1 		"Relè Caldaia" 												<light>					(gLocaleTecnico, gSouliss) 							{souliss="T11:1:5", autoupdate="false"}
+Number SoulissUmidity_1		"Umidità stanza [%.1f %%]" 									<humidity> 				(gLocaleTecnico, gSouliss, gUmidita) 							{souliss="T53:1:0"}
+Number SoulissTemperature_1	"Temperatura stanza [%.1f °C]" 								<temperature> 			(gLocaleTecnico, gSouliss, avgTemperatura, gTemperatura) {souliss="T52:1:2"}
+Number HEALTHNodo1 			"Health Node 1 [%.1f]" 										<clock> 				(gLocaleTecnico, gSouliss) 								{souliss="D98:1:998"}
+String TIMESTAMP_Nodo1 		"Update Node 1 [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]" 		<clock> 				(gLocaleTecnico, gSouliss) 								{souliss="D99:1:999"}
+
+//IP Device
+Switch SoulissStatus_0		"Device 0 Souliss Status" 								(gLocaleTecnico,gSouliss)  	{channel="network:device:souliss0:online"}
+Number SoulissPingTime_0 	"Device 0 Souliss Ping Time [%.1f ms]" <returnpipe> 	(gLocaleTecnico,gSouliss) 	{channel="network:device:souliss0:time"}
+
+Switch SoulissStatus_1		"Device 1 Souliss Status" 								(gLocaleTecnico,gSouliss)  	{channel="network:device:souliss1:online"}
+Number SoulissPingTime_1 	"Device 1 Souliss Ping Time [%.1f ms]" <returnpipe> 	(gLocaleTecnico,gSouliss) 	{channel="network:device:souliss1:time"}
+
+
+

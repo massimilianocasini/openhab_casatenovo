@@ -1,0 +1,80 @@
+var Number counter = 0
+var Number stato = 0
+
+rule "Controllo riscaldamento Locale"
+when
+	Item SoulissIn2_0 changed or
+	Item RiscaAuto changed
+then
+	if ((SoulissIn2_0.state == ON) && //Termostato locale acceso
+		(stato == 1)){  //Impostato in locale
+	 		sendCommand(SoulissRele2_0, ON)
+	 		logInfo("Riscaldamento","Termostato locale acceso")
+	 		}
+	 
+	if ((SoulissIn2_0.state == OFF) && //Termostato locale spento
+		(stato == 1)){  //Impostato in locale
+	 		sendCommand(SoulissRele2_0, OFF)
+	 		logInfo("Riscaldamento","Termostato locale spento")
+	 		}
+	 		
+	 if ((SoulissIn2_0.state == ON) && //Termostato locale acceso
+		(stato == 0)){  //Impostato in remoto
+	 		logInfo("Riscaldamento","Termostato locale acceso ma impostazione in remoto")
+	 		}
+	 		
+	 if ((SoulissIn2_0.state == OFF) && //Termostato locale acceso
+		(stato == 0)){  //Impostato in remoto
+	 		logInfo("Riscaldamento","Termostato locale spento ma impostazione in remoto")
+	 		}
+end
+	
+rule "Controllo riscaldamento Remoto"
+when
+	Item SoulissTemperature_0 received update or
+	Item SetPoint1 changed or
+	Item RiscaAuto changed
+then
+		if (counter == 0) {
+		SetPoint1.postUpdate(20)
+		sendCommand(SoulissRele2_0, OFF)
+		counter = counter + 1
+		logInfo("Riscaldamento", "setto a 20 il setpoint")
+		}
+		
+		// Sistema in remoto, setpoint > temperatura
+		if ((SoulissTemperature_0.state < (SetPoint1.state)) && 
+			(stato == 0)) {
+			sendCommand(SoulissRele2_0, ON)
+		logInfo("Riscaldamento", "ON il riscaldamento perchè il setPoint richiesto è "+ SetPoint1.state + " e la temperatura attuale è "+ SoulissTemperature_0.state)
+		}
+		// Sistema in locale
+		if ((SoulissTemperature_0.state < (SetPoint1.state)) && 
+			(stato == 1)){
+		logInfo("Riscaldamento", "Il setPoint richiesto è maggiore della temperatura attuale ma lo stato è impostato in LOCALE")
+		}
+  		// Sistema in remoto, setpoint =< temperatura
+		if ((SoulissTemperature_0.state >= (SetPoint1.state)) && 
+			(stato == 0)){
+		sendCommand(SoulissRele2_0, OFF)
+		logInfo("Riscaldamento", "OFF il riscaldamento perchè il setPoint richiesto è "+ SetPoint1.state + " e la temperatura attuale è "+ SoulissTemperature_0.state)
+		}
+		
+		
+end
+
+rule "Impostazione Locale o Remoto"
+when
+	Item RiscaAuto changed
+then 
+	 if (RiscaAuto.state == ON){  //locale
+	 stato = 1
+	 logInfo("Riscaldamento","Riscaldamento in LOCALE")
+	 }
+	 
+	 if (RiscaAuto.state == OFF){ //remoto
+	 stato = 0
+	 logInfo("Riscaldamento","Riscaldamento in REMOTO")
+	 
+	 }
+end

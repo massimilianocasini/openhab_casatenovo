@@ -1,0 +1,141 @@
+// Grafici
+Number Graph_Weather_Temperature <chart>
+Number Graph_Weather_Pressure <chart>
+
+
+//OpenWeatherMap			
+Number OpenRoma_TemperaturaCurr 			"Temperatura esterna attuale [%.1f °C]"	<temperature> 		(Weather, gTemperatura)	{weather="locationId=OpenRoma, type=temperature, property=current"}
+
+Number OpenRoma_TemperaturaMinF1 			"Temperatura minima di domani [%.1f °C] OpenRoma"	<temperature> 	(Weather, gTemperatura)	{weather="locationId=OpenRoma, forecast=1, type=temperature, property=min"}
+
+Number OpenRoma_TemperaturaMaxF1 			"Temperatura massima di domani [%.1f °C] OpenRoma"	<temperature> 	(Weather, gTemperatura)	{weather="locationId=OpenRoma, forecast=1, type=temperature, property=max"} 
+
+String   OpenRoma_TemperaturaMinMaxF1     "Temperatura previsione per domani Min/Max [%s °C] OpenRoma"            <temperature>								 {weather="locationId=OpenRoma, forecast=1, type=temperature, property=minMax"}
+
+Number OpenRoma_Umidita 				"Umidità esterna attuale [%.1f %%]"		<temperature> 	(Weather, gTemperatura) {weather="locationId=OpenRoma, type=atmosphere, property=humidity"} 
+Number OpenRoma_Pressione				"Pressione esterna attuale [%.1f mBar]" <temperature> 	(Weather, gTemperatura)	{weather="locationId=OpenRoma, type=atmosphere, property=pressure"}
+String OpenRoma_PressioneTrend			"Trend pressione esterna [%s]" <temperature> 			(Weather, gTemperatura)	{weather="locationId=OpenRoma, type=atmosphere, property=pressureTrend"}
+Number   Visibilita      				"Visibility [%.2f km]"  														{weather="locationId=OpenRoma, type=atmosphere, property=visibility"}
+
+
+
+Number OpenRoma_Chart_Period		"Chart Period" <chart>
+
+
+//Astro
+DateTime Sunrise_Time       "Sunrise [%1$tH:%1$tM]"  <sunrise>	{channel="astro:sun:astroRoma:rise#start"}
+DateTime Sunset_Time        "Sunset [%1$tH:%1$tM]"   <sunset>	{channel="astro:sun:astroRoma:set#start"}
+Number  Azimuth            "Azimuth"                			{channel="astro:sun:astroRoma:position#azimuth"}
+Number  Elevation          "Elevation"             				{channel="astro:sun:astroRoma:position#elevation"}
+String  MoonPhase          "MoonPhase"              			{channel="astro:moon:astroRoma:phase#name"}
+Number  Total_Radiation    "Radiation"              			{channel="astro:sun:astroRoma:radiation#total"}
+String	Zodiac				"Segno zodiacale"					{channel="astro:sun:astroRoma:zodiac#sign"}
+String	Season				"Stagione"							{channel="astro:sun:astroRoma:season#name"}
+
+
+
+
+
+Number   Ozone            "Ozone [%d ppm]"        {weather="locationId=OpenRoma, type=atmosphere, property=ozone"}
+Number   UV_Index         "UV Index"              {weather="locationId=OpenRoma, type=atmosphere, property=uvIndex, scale=0"}
+
+// clouds
+Number   Clouds   "Clouds [%.0f %%]"   {weather="locationId=OpenRoma, type=clouds, property=percent"}
+
+// condition
+String   Condition        "Condition [%s]"      {weather="locationId=OpenRoma, type=condition, property=text"}
+String   Condition_ID     "Condition id [%s]"   {weather="locationId=OpenRoma, type=condition, property=id"}
+DateTime ObservationTime  "Observation time [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"   {weather="locationId=OpenRoma, type=condition, property=observationTime"}
+DateTime LastUpdate       "Last update [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"        {weather="locationId=OpenRoma, type=condition, property=lastUpdate"}
+String   CommonId         "Common id [%s]"      {weather="locationId=OpenRoma, type=condition, property=commonId"}
+
+// precipitation
+Number   Rain          "Rain [%.2f mm/h]"   {weather="locationId=OpenRoma, type=precipitation, property=rain"}
+Number   Snow          "Snow [%.2f mm/h]"   {weather="locationId=OpenRoma, type=precipitation, property=snow"}
+Number   Precip_Probability   "Precip probability [%d %%]"   {weather="locationId=WunderRoma, type=precipitation, property=probability"}
+
+// new total property in 1.8, only Wunderground
+Number   Precip_Total         "Precip total [%d mm]"   {weather="locationId=WunderRoma, type=precipitation, property=total"}
+
+
+// temperature
+Number   Temperature      "Temperature [%.2f °C]"     <temperature> (gTemperature) {weather="locationId=WunderRoma, type=temperature, property=current"}
+Number   Temp_Feel        "Temperature feel [%.2f °C]" <temperature> (gTemperature) {weather="locationId=WunderRoma, type=temperature, property=feel"}
+Number   Temp_Dewpoint    "Dewpoint [%.2f °C]"         <temperature> (gTemperature) {weather="locationId=WunderRoma, type=temperature, property=dewpoint"}
+
+
+// min and max values 
+
+String   Temp_MinMax      "Min/Max [%s °C]"            <temperature> (gTemperature)		{weather="locationId=OpenRoma, type=temperature, property=minMax"}
+
+// wind
+Number   Wind_Speed           "Windspeed [%.2f km/h]"    {weather="locationId=OpenRoma, type=wind, property=speed"}
+Number   Wind_Speed_Beaufort  "Windspeed Beaufort [%d]"  {weather="locationId=OpenRoma, type=wind, property=speed, unit=beaufort"}
+Number   Wind_Speed_Knots     "Windspeed [%.2f kn]"      {weather="locationId=OpenRoma, type=wind, property=speed, unit=knots"}
+String   Wind_Direction       "Wind direction [%s]"      {weather="locationId=OpenRoma, type=wind, property=direction"}
+Number   Wind_Degree          "Wind degree [%.0f °]"     {weather="locationId=OpenRoma, type=wind, property=degree"}
+Number   Wind_Gust            "Wind gust [%.2f km/h]"    {weather="locationId=OpenRoma, type=wind, property=gust"}
+Number   Wind_Gust_Beaufort   "Wind gust Beaufort [%d]"  {weather="locationId=OpenRoma, type=wind, property=gust, unit=beaufort"}
+Number   Wind_Gust_Knots      "Wind gust [%.2f kn]"      {weather="locationId=OpenRoma, type=wind, property=gust, unit=knots"}
+Number   Wind_Chill           "Wind chill [%.2f °C]"     {weather="locationId=OpenRoma, type=wind, property=chill"}
+
+
+// weather station (only Wunderground and Hamweather), needs version 1.7 or greater of the binding
+String   Station_Name         "Località [%s]"        {weather="locationId=WunderRoma, type=station, property=name"}
+String   Station_Id           "Station Id [%s]"         {weather="locationId=WunderRoma, type=station, property=id"}
+Number   Station_Latitude     "Station Latitude [%.6f]" <movecontrol>  {weather="locationId=WunderRoma, type=station, property=latitude, scale=6"}
+Number   Station_Longitude    "Station Longitude [%.6f]" <movecontrol> {weather="locationId=WunderRoma, type=station, property=longitude, scale=6"}
+
+
+//FORECAST1
+
+
+// atmosphere
+Number   Humidity_F1        "Humidity [%d %%]"      {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=humidity"}
+Number   Visibility_F1       "Visibility [%.2f km]"  {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=visibility"}
+Number   Pressure_F1        "Pressure [%.2f mb]"    {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=pressure"}
+String   Pressure_Trend_F1   "Pressuretrend [%s]"    {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=pressureTrend"}
+Number   Ozone_F1            "Ozone [%d ppm]"        {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=ozone"}
+Number   UV_Index_F1         "UV Index"              {weather="locationId=OpenRoma,forecast=1, type=atmosphere, property=uvIndex, scale=0"}
+
+
+// clouds
+Number   Clouds_F1   "Clouds [%.0f %%]"   {weather="locationId=OpenRoma,forecast=1, type=clouds, property=percent"}
+
+// condition
+String   Condition_F1        "Condition [%s]"      {weather="locationId=OpenRoma,forecast=1, type=condition, property=text"}
+String   Condition_ID_F1     "Condition id [%s]"   {weather="locationId=OpenRoma,forecast=1, type=condition, property=id"}
+DateTime ObservationTime_F1  "Observation time [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"   {weather="locationId=OpenRoma,forecast=1, type=condition, property=observationTime"}
+DateTime LastUpdate_F1       "Last update [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"        {weather="locationId=OpenRoma,forecast=1, type=condition, property=lastUpdate"}
+String   CommonId_F1        "Common id [%s]"      {weather="locationId=OpenRoma,forecast=1,type=condition, property=commonId"}
+
+// precipitation
+Number   Rain_F1          "Rain [%.2f mm/h]"   {weather="locationId=WunderRoma,forecast=1, type=precipitation, property=rain"}
+Number   Snow_F1          "Snow [%.2f mm/h]"   {weather="locationId=WunderRoma,forecast=1, type=precipitation, property=snow"}
+Number   Precip_Probability_F1   "Precip probability [%d %%]"   {weather="locationId=WunderRoma,forecast=1, type=precipitation, property=probability"}
+
+// new total property in 1.8, only Wunderground
+Number   Precip_Total_F1         "Precip total [%d mm]"   {weather="locationId=WunderRoma,forecast=1, type=precipitation, property=total"}
+
+
+// temperature
+Number   Temperature_F1      "Temperature [%.2f °C]"      <temperature> {weather="locationId=WunderRoma,forecast=1, type=temperature, property=current"}
+Number   Temp_Feel_F1        "Temperature feel [%.2f °C]" <temperature> {weather="locationId=WunderRoma,forecast=1, type=temperature, property=feel"}
+Number   Temp_Dewpoint_F1    "Dewpoint [%.2f °C]"         <temperature> {weather="locationId=WunderRoma,forecast=1, type=temperature, property=dewpoint"}
+
+
+
+String   Temp_MinMax_F1      "Min/Max [%s °C]"            <temperature> {weather="locationId=WunderRoma,forecast=1, type=temperature, property=minMax"}
+
+// wind
+Number   Wind_Speed_F1           "Windspeed [%.2f km/h]"    {weather="locationId=OpenRoma,forecast=1, type=wind, property=speed"}
+Number   Wind_Speed_Beaufort_F1  "Windspeed Beaufort [%d]"  {weather="locationId=OpenRoma,forecast=1, type=wind, property=speed, unit=beaufort"}
+Number   Wind_Speed_Knots_F1     "Windspeed [%.2f kn]"      {weather="locationId=OpenRoma,forecast=1, type=wind, property=speed, unit=knots"}
+String   Wind_Direction_F1       "Wind direction [%s]"      {weather="locationId=OpenRoma,forecast=1, type=wind, property=direction"}
+Number   Wind_Degree_F1          "Wind degree [%.0f °]"     {weather="locationId=OpenRoma,forecast=1, type=wind, property=degree"}
+Number   Wind_Gust_F1            "Wind gust [%.2f km/h]"    {weather="locationId=OpenRoma,forecast=1, type=wind, property=gust"}
+Number   Wind_Gust_Beaufort_F1   "Wind gust Beaufort [%d]"  {weather="locationId=OpenRoma,forecast=1, type=wind, property=gust, unit=beaufort"}
+Number   Wind_Gust_Knots_F1      "Wind gust [%.2f kn]"      {weather="locationId=OpenRoma,forecast=1, type=wind, property=gust, unit=knots"}
+Number   Wind_Chill_F1           "Wind chill [%.2f °C]"     {weather="locationId=OpenRoma,forecast=1, type=wind, property=chill"}
+
+

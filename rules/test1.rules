@@ -1,0 +1,12 @@
+rule "Buttons to light mapping"
+when
+    gStations received update
+then
+    // Hack to get at the most recently pressed button
+    Thread::sleep(100) // experiment with this value, the purpose is to give persistence time to save the state so lastUpdate will work properly. You may not need it at all but if the wrong button keeps coming up, make this sleep longer
+    val stazione = gStations.members.sortBy[lastUpdate].last
+
+    val lightName = stazione.name.substring(0, stazione.name.lastIndexOf('_')) // test this, there may be an off by one error here
+sendTelegram("Bot1", "[" + lightName +"] [" + stazione.state.toString + "] ")
+end
+

@@ -1,0 +1,13 @@
+Bridge zwave:serial_zstick:controller "ZWave Controller" [ port="/dev/ttyACM0", controller_softreset="false", controller_master="true", controller_inclusiontimeout=60, heal_enable="true", heal_time=2, security_networkkey="AF 2D 9E 35 21 A1 ED 2B 45 B1 F4 DA 39 A8 B5 F2" ]
+/*Thing zwave:FGWP101:controller:node2 "FGWP101 Metered Wall Plug Switch" (zwave:serial_zstick:controller) [ node_id=2 ]
+Thing zwave:FGMS001:controller:node3 "FGMS001 Motion Sensor" (zwave:serial_zstick:controller) [ node_id=3 ]
+
+Thing zwave:rtc_ct100_00_000:controller:node21 "Node 21: CT100 - Water Room" (zwave:serial_zstick:controller) [ node_id=21 ] {
+  Channels:
+    Type sensor_temperature : sensor_temperature [ config_scale=1 ]
+    Type thermostat_setpoint : thermostat_setpoint_cooling [ config_scale=1 ]
+    Type thermostat_setpoint : thermostat_setpoint_heating [ config_scale=1 ]
+}
+Thing zwave:homeseer_hswd100_00_000:controller:node22 "Node 22: HSWD100 - Outside Front Door Lights" (zwave:serial_zstick:controller) [ node_id=22 ]
+
+*/

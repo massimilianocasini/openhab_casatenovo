@@ -1,0 +1,43 @@
+rule "Prodino OK"
+when
+    Item SoulissStatus_0 changed from ON to OFF
+then
+    sendTelegram("bot1", "Prodino  OFFLINE!")
+
+end
+
+rule "Prodino KO"
+when
+    Item SoulissStatus_0 changed from OFF to ON
+then
+    sendTelegram("bot1","Prodino ONLINE!")
+end
+
+
+rule "Controllo allarme ON"
+when
+	Item SoulissIn1_0 changed from OFF to ON
+then		
+	sendCommand(SoulissRele1, ON)
+end
+
+rule "Controllo allarme OFF"
+when
+	Item SoulissIn1_0 changed from ON to OFF
+then		
+	sendCommand(SoulissRele1, OFF)
+end 
+
+rule "Controllo allarme Disiserito"
+when
+	Item SoulissIn1_0 changed from OFF to ON
+then		
+	sendTelegram("bot1", "Allarme inserito")
+end
+
+rule "Controllo allarme Disiserito"
+when
+	Item SoulissIn1_0 changed from ON to OFF
+then		
+	sendTelegram("bot1", "Allarme disinserito")
+end

@@ -1,0 +1,14 @@
+Strategies {
+   everyMinute 	: "0 * * * * ?"
+   everyHour 	: "0 0 * * * ?"
+   everyDay  	: "0 0 0 * * ?"
+
+    /* if no strategy is specified for an item entry below, the default list will be used*/ 
+  default = everyChange
+}
+
+  /* Formato group*, item, * all items*/ 
+Items {
+ gTemperatura*, avgTemperatura*, Temp*, avgLuminosita*, sumPotenza*, sumEnergia*, gPotenza*, gEnergia*, gUmidita* : strategy =  everyMinute, everyChange, restoreOnStartup
+
+}

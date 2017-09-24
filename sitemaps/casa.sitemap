@@ -1,0 +1,135 @@
+sitemap casa label="Benvenuto a Casatenovo" {
+
+	Switch item=Stazione01
+	Switch item=Stazione02
+	
+	Frame label="Meteo"
+			{
+			Text item=Station_Name icon=sun
+				{
+				Text item=Station_Name valuecolor=["orange"]
+				Text item=Station_Id valuecolor=["black"]
+				Text item=Sunrise_Time label=Alba valuecolor=[>1="black"]
+				Text item=Sunset_Time label=Tramonto valuecolor=[>1="black"]
+				Text item=Station_Latitude valuecolor=[>1="black"]
+				Text item=Station_Longitude valuecolor=[>1="black"]
+				Text item=OpenRoma_TemperaturaCurr label="Temperatura attuale" valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+				{
+					Image label="Temperatura attuale"
+					url="http://192.168.178.60:3000/render/dashboard-solo/db/openHAB?panelId=2&orgId=1&width=1000&height=500&from=now-48h&to=now"
+	    		}
+				Text item=OpenRoma_TemperaturaMinF1  valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+				Text item=OpenRoma_TemperaturaMaxF1  valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+				Text item=OpenRoma_TemperaturaMinMaxF1
+				Text item=OpenRoma_Umidita
+				Text item=OpenRoma_Pressione
+				{
+					Image label="Pressione esterna"
+					url="http://192.168.178.60:3000/render/dashboard-solo/db/openHAB?orgId=1&panelId=5&width=1000&height=500&from=now-48h&to=now"
+				}
+				Text item=OpenRoma_PressioneTrend
+			}
+	}
+
+    Frame label="Piano Terra"
+    	{
+		Text item=avgTemperatura valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+		Text item=avgVolumetrico
+		Text item=avgLuminosita
+		Text item=avgBatteria
+		Text item=sumPotenza
+		Text item=sumEnergia
+		Switch item=avgPresa icon="switch" mappings=[OFF="All Off", ON="All On"]
+		Text label="Rapporto tra temperature" icon=temperature
+		{
+		Image label="Rapporto tra temperature" 
+		url="http://192.168.178.60:3000/render/dashboard-solo/db/openHAB?panelId=4&orgId=1&width=1000&height=500&&from=now-168h&to=now"
+		}
+		
+		}
+	
+	
+
+	Frame label="Studio"
+	{
+		Text label="Studio FritzBox AVM Home Automation " icon=office
+		Text item=Fritz200temperatura
+		Switch item=Fritz200switch
+		Text item=onewiretemp1Value
+		
+		}
+	Frame label="Bagno" icon=toilet
+	{
+		Text label="Bagno" icon=toilet
+		{
+			Text item=MotionSensor1_PT_Temperatura	label="Temperatura" valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+			{
+				Image label="Temperatura interna"
+				url="http://192.168.178.60:3000/render/dashboard-solo/db/openHAB?panelId=3&orgId=1&width=1000&height=500&from=now-48h&to=now"
+					
+			}
+			Text item=MotionSensor1_PT_Luminosita
+			{
+				Switch item=Graph_MotionSensor1_PT_Luminosita label="Grafico Luminosità" mappings=[0=Hour, 1=Day, 2=Week]
+				Chart item=MotionSensor1_PT_Luminosita period=h refresh=60000 visibility=[Graph_MotionSensor1_PT_Luminosita==0, Graph_MotionSensor1_PT_Luminosita=="Uninitialized"]
+				Chart item=MotionSensor1_PT_Luminosita period=D refresh=60000 visibility=[Graph_MotionSensor1_PT_Luminosita==1]
+				Chart item=MotionSensor1_PT_Luminosita period=W refresh=60000 visibility=[Graph_MotionSensor1_PT_Luminosita==2]
+			}
+		Text item=MotionSensor1_PT_Volumetrico
+		Text item=MotionSensor1_PT_Tamper
+		Text item=MotionSensor1_PT_Batteria
+		Text item=WallPlug1_PT_Potenza label="Caldobagno potenza istantanea assorbita (W)" icon=fan_box
+			{
+				Image label="Potenza assorbita"
+				url="http://192.168.178.60:3000/render/dashboard-solo/db/openhab?panelId=9&orgId=1&from=now-48h&to=now&theme=dark&width=1000&height=500"
+			}
+
+		Text item=WallPlug1_PT_Energia	label="Caldobagno energia totale assorbita (KWh)" icon=fan_box
+		Switch item=WallPlug1_PT_Presa label="Stato Caldobagno" icon=poweroutlet
+
+		}
+	}
+
+	Frame label="Soggiorno"
+	{
+		Text label="Soggiorno" icon=sofa
+		{
+			Switch item=MySkyStatus	mappings=[ON="Presente", OFF="Non connesso"]
+			Text item=MySkyPingTime
+		}
+	}
+
+	Frame label="Souliss" icon=light
+	{
+			Text item=gSouliss icon=light
+			{
+				Switch item=RiscaAuto mappings=[ON="Locale", OFF="Remoto"]
+				Switch item=SoulissIn1_0	mappings=[ON="ON", OFF="OFF"]
+				Switch item=SoulissIn2_0	mappings=[ON="Termostato ON", OFF="Termostato OFF"]
+				Switch item=SoulissIn3_0	mappings=[ON="ON", OFF="OFF"]
+				Switch item=SoulissIn4_0	mappings=[ON="ON", OFF="OFF"]
+				//Switch item=SoulissRele1	mappings=[ON="ON", OFF="OFF"]
+				Text item=SoulissRele1_0
+				Switch item=SoulissRele2_0	mappings=[ON="ON", OFF="OFF"]
+				Switch item=SoulissRele3_0	mappings=[ON="ON", OFF="OFF"]
+				Switch item=SoulissRele4_0	mappings=[ON="ON", OFF="OFF"]
+				Text item=SoulissUmidity_0
+				Text item=SoulissTemperature_0
+				Setpoint item=SetPoint1 minValue=1 maxValue=30 step=1
+				Switch item=SoulissStatus_0	mappings=[ON="Presente", OFF="Non connesso"]
+				Text item=SoulissPingTime_0
+				Text item=HEALTHNodo0
+				Text item=TIMESTAMP_Nodo0
+
+				Switch item=SoulissIn1_1	mappings=[ON="ON", OFF="OFF"]
+				Switch item=SoulissRele1_1	mappings=[ON="ON", OFF="OFF"]
+				Text item=SoulissUmidity_1
+				Text item=SoulissTemperature_1
+				Switch item=SoulissStatus_1	mappings=[ON="Presente", OFF="Non connesso"]
+				Text item=SoulissPingTime_1
+				Text item=HEALTHNodo1
+				Text item=TIMESTAMP_Nodo1
+			}
+	}
+
+}
