@@ -1,1 +1,1 @@
-String onewiretemp1Value "Temperatura sensore 1 è [%s °C]"  <temperature> {channel="exec:command:onewiretemp1:output"}
+String onewiretemp1Value "Temperatura sensore 1 è [%.4s °C]"  <temperature> (avgTemperatura, gTemperatura) {channel="exec:command:onewiretemp1:output"}

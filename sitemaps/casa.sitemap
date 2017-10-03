@@ -1,11 +1,12 @@
 sitemap casa label="Benvenuto a Casatenovo" {
 
-	Switch item=Stazione01
-	Switch item=Stazione02
-	
+		
 	Frame label="Meteo"
-			{
-			Text item=Station_Name icon=sun
+		{
+		Text item=OpenRoma_TemperaturaCurr label="Temperatura esterna attuale"
+		Text item=Data
+			
+			Text item=Station_Name icon=zoom
 				{
 				Text item=Station_Name valuecolor=["orange"]
 				Text item=Station_Id valuecolor=["black"]
@@ -52,17 +53,10 @@ sitemap casa label="Benvenuto a Casatenovo" {
 
 	Frame label="Studio"
 	{
-		Text label="Studio FritzBox AVM Home Automation " icon=office
-		Text item=Fritz200temperatura
-		Switch item=Fritz200switch
-		Text item=onewiretemp1Value
+		Text item=onewiretemp1Value label="Temperatura 1Wire" valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+	 	
 		
-		}
-	Frame label="Bagno" icon=toilet
-	{
-		Text label="Bagno" icon=toilet
-		{
-			Text item=MotionSensor1_PT_Temperatura	label="Temperatura" valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
+			Text item=MotionSensor1_PT_Temperatura	label="Temperatura MotionSensor" valuecolor=[>25="orange",>15="green",>5="orange",<=5="blue"]
 			{
 				Image label="Temperatura interna"
 				url="http://192.168.178.60:3000/render/dashboard-solo/db/openHAB?panelId=3&orgId=1&width=1000&height=500&from=now-48h&to=now"
@@ -78,6 +72,12 @@ sitemap casa label="Benvenuto a Casatenovo" {
 		Text item=MotionSensor1_PT_Volumetrico
 		Text item=MotionSensor1_PT_Tamper
 		Text item=MotionSensor1_PT_Batteria
+		
+	}
+		
+	Frame label="Bagno" icon=toilet
+	{
+		
 		Text item=WallPlug1_PT_Potenza label="Caldobagno potenza istantanea assorbita (W)" icon=fan_box
 			{
 				Image label="Potenza assorbita"
@@ -88,22 +88,23 @@ sitemap casa label="Benvenuto a Casatenovo" {
 		Switch item=WallPlug1_PT_Presa label="Stato Caldobagno" icon=poweroutlet
 
 		}
-	}
+	
 
 	Frame label="Soggiorno"
 	{
-		Text label="Soggiorno" icon=sofa
-		{
+		
 			Switch item=MySkyStatus	mappings=[ON="Presente", OFF="Non connesso"]
 			Text item=MySkyPingTime
-		}
-	}
+	}	
+	
 
 	Frame label="Souliss" icon=light
 	{
 			Text item=gSouliss icon=light
 			{
-				Switch item=RiscaAuto mappings=[ON="Locale", OFF="Remoto"]
+			 Text label="Prodino1" icon=settings
+		{
+				Switch item=RiscaAuto 		mappings=[ON="Locale", OFF="Remoto"]
 				Switch item=SoulissIn1_0	mappings=[ON="ON", OFF="OFF"]
 				Switch item=SoulissIn2_0	mappings=[ON="Termostato ON", OFF="Termostato OFF"]
 				Switch item=SoulissIn3_0	mappings=[ON="ON", OFF="OFF"]
@@ -120,7 +121,9 @@ sitemap casa label="Benvenuto a Casatenovo" {
 				Text item=SoulissPingTime_0
 				Text item=HEALTHNodo0
 				Text item=TIMESTAMP_Nodo0
-
+			}
+			Text label="ESP8266" icon=settings
+			{ 
 				Switch item=SoulissIn1_1	mappings=[ON="ON", OFF="OFF"]
 				Switch item=SoulissRele1_1	mappings=[ON="ON", OFF="OFF"]
 				Text item=SoulissUmidity_1
@@ -130,6 +133,17 @@ sitemap casa label="Benvenuto a Casatenovo" {
 				Text item=HEALTHNodo1
 				Text item=TIMESTAMP_Nodo1
 			}
+			Text label="Test timer"
+  			{
+		    Switch item=LightTimer
+		    Switch item=SoulissRele1_1
+		    Setpoint item=LightStartHour minValue=1 maxValue=23 step=1 
+		    Setpoint item=LightStartMinute minValue=0 maxValue=59 step=5 
+		    Setpoint item=LightDurationHour minValue=0 maxValue=12 step=1 
+   			Setpoint item=LightDurationMinute minValue=0 maxValue=59 step=1 
+  			}
+			
+		}
 	}
 
 }

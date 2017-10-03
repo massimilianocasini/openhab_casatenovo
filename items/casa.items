@@ -24,18 +24,18 @@ Group:Number:SUM sumEnergia						"Consumo di energia totale [%.2f KWh]" 						<h
 
 
 //Items zwave
-Number MotionSensor1_PT_Temperatura				"Temperatura [%.1f °C]"							<temperature>		(avgTemperatura, gPTBagno, gTemperatura) 				    {channel="zwave:device:controller:node3:sensor_temperature"}
-Switch MotionSensor1_PT_Volumetrico 			"IR [MAP(zwave_motion.map):%s]" 				<motion> 			(avgVolumetrico, gPTBagno) 									{channel="zwave:device:controller:node3:alarm_motion"}
-Switch MotionSensor1_PT_Tamper					"Stato tamper [MAP(zwave_tamper.map):%s]" 		<lock> 				(gPTBagno)													{channel="zwave:device:controller:node3:alarm_tamper"}
-Number MotionSensor1_PT_Luminosita 				"Luminosità [%.2f Lux]" 						<sun> 				(avgLuminosita, gLuminosita, gPTBagno)						{channel="zwave:device:controller:node3:sensor_luminance"}
-Number MotionSensor1_PT_Batteria 				"Stato batteria [%d %%]"						<battery> 			(avgBatteria, gPTBagno)								        {channel="zwave:device:controller:node3:battery-level"}
+Number MotionSensor1_PT_Temperatura				"Temperatura [%.1f °C]"							<temperature>		(avgTemperatura, gPTStudio, gTemperatura) 				    {channel="zwave:device:controller:node3:sensor_temperature"}
+Switch MotionSensor1_PT_Volumetrico 			"IR [MAP(zwave_motion.map):%s]" 				<motion> 			(avgVolumetrico, gPTStudio) 									{channel="zwave:device:controller:node3:alarm_motion"}
+Switch MotionSensor1_PT_Tamper					"Stato tamper [MAP(zwave_tamper.map):%s]" 		<lock> 				(gPTStudio)													{channel="zwave:device:controller:node3:alarm_tamper"}
+Number MotionSensor1_PT_Luminosita 				"Luminosità [%.2f Lux]" 						<sun> 				(avgLuminosita, gLuminosita, gPTStudio)						{channel="zwave:device:controller:node3:sensor_luminance"}
+Number MotionSensor1_PT_Batteria 				"Stato batteria [%d %%]"						<battery> 			(avgBatteria, gPTStudio)								        {channel="zwave:device:controller:node3:battery-level"}
 
 Switch WallPlug1_PT_Presa 						"Wall Plug presa" 								<poweroutlet>		(avgPresa, gPTBagno)							            {channel="zwave:device:controller:node2:switch_binary"}
 Number WallPlug1_PT_Potenza 					"Wall Plug potenza istantanea [%.1f W]" 		<heating>			(sumPotenza, gPTBagno, gPotenza)							{channel="zwave:device:controller:node2:meter_watts"}
 Number WallPlug1_PT_Energia 					"Wall Plug Totale energia [%.2f KWh]" 			<heating>			(sumEnergia, gPTBagno, gEnergia)						   	{channel="zwave:device:controller:node2:meter_kwh"}
 
 
-DateTime Data "Data [%1$tA, %1$tD.%1$tM.%1$tY - %1$tH:%1$tM:%1$tS]"	<clock>
+DateTime Data "Data [%1$ta, %1$td.%1$tm.%1$tY - %1$tH:%1$tM]"	<clock> { channel="ntp:ntp:demo:dateTime" }
 
 
 Switch MySkyStatus						"MySky Stato" 								                                                                        (gPTSoggiorno) {channel="network:device:mysky:online"}
@@ -45,6 +45,5 @@ Number MySkyPingTime 					"Ping MySky [%.1f ms]"  <returnpipe>	                 
 Number Fritz200temperatura		"Temperatura rilevata [%.1f C°]"		<temperature>	
 Switch 	Fritz200switch			"Switch presa"			<poweroutlet>
 
-Switch Stazione01 "Stazione 1 switch"      (gStations)
-Switch Stazione02 "Stazione 2 switch"      (gStations)
+
 

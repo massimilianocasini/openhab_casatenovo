@@ -33,3 +33,10 @@ Number SoulissPingTime_1 	"Device 1 Souliss Ping Time [%.1f ms]" <returnpipe> 	(
 
 
 
+//Timer test
+Switch LightTimer "Caldaia timer"
+//Switch RedLed "Led rosso" <light> {gpio="pin:26 activelow:no initialValue:low"}
+Number LightStartHour "Caldaia Start Time Hour [%d:00]"
+Number LightStartMinute "Caldaia Start Time Min [%d Min]"
+Number LightDurationHour "Caldaia On Duration Hour [%d Hr]"
+Number LightDurationMinute "Caldaia On Duration Min [%d Min]"

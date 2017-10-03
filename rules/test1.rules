@@ -1,12 +1,47 @@
-rule "Buttons to light mapping"
+import org.joda.time.DateTime
+
+rule "Caldaia Timer"
 when
-    gStations received update
+  Item LightTimer received update or
+  Time cron "0 5 0 * * ?"
 then
-    // Hack to get at the most recently pressed button
-    Thread::sleep(100) // experiment with this value, the purpose is to give persistence time to save the state so lastUpdate will work properly. You may not need it at all but if the wrong button keeps coming up, make this sleep longer
-    val stazione = gStations.members.sortBy[lastUpdate].last
-
-    val lightName = stazione.name.substring(0, stazione.name.lastIndexOf('_')) // test this, there may be an off by one error here
-sendTelegram("Bot1", "[" + lightName +"] [" + stazione.state.toString + "] ")
-end
-
+  var int startHrInt = (LightStartHour.state as DecimalType).intValue
+  var int durationHrInt = (LightDurationHour.state as DecimalType).intValue
+  var DateTime startTmr = parse(now.getYear() + "-" + now.getMonthOfYear() + "-" + now.getDayOfMonth() + "T" + startHrInt + ":00")
+  var DateTime stopTmr = parse(now.getYear() + "-" + now.getMonthOfYear() + "-" + now.getDayOfMonth() + "T" + startHrInt + ":00").plusHours(durationHrInt)
+  var Timer lightOnTimer
+  var Timer lightOffTimer
+  var Timer poolOffTimer
+  if(LightTimer.state == ON)
+  {
+    lightOnTimer = createTimer(startTmr) [| 
+      sendCommand(SoulissRele1_1, ON)
+      postUpdate(SoulissRele1_1, ON)
+      Thread::sleep(10000)  //wait 10 seconds, 
+      sendCommand(SoulissRele1_1, ON)
+    ]
+    poolOffTimer = createTimer(stopTmr) [| 
+      sendCommand(SoulissRele1_1, OFF)
+      postUpdate(SoulissRele1_1, OFF)
+      Thread::sleep(10000)  //wait 10 seconds, 
+      sendCommand(SoulissRele1_1, OFF)
+    ]
+  }
+  if(LightTimer.state == OFF)
+  {
+    sendCommand(SoulissRele1_1, OFF)
+    postUpdate(SoulissRele1_1, OFF)
+    Thread::sleep(10000)  //wait 10 seconds,
+    sendCommand(SoulissRele1_1, OFF)
+    if(lightOnTimer != null)
+    {
+      lightOnTimer.cancel
+      lightOnTimer = null
+    }
+    if(lightOffTimer != null)
+    {
+      lightOffTimer.cancel
+      lightOffTimer = null
+    }
+  }
+end 
