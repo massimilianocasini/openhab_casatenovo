@@ -146,4 +146,13 @@ sitemap casa label="Benvenuto a Casatenovo" {
 		}
 	}
 
+	Frame label="ESP NodeMCU"
+	{
+			Switch item=ESP158643_GPIO5 icon=light
+			Switch item=ESP158643_GPIO4
+			
+			Switch item=ESP1273559_GPIO5 icon=light
+			
+	}
+	
 }

@@ -8,7 +8,7 @@ Switch SoulissIn3_0 "Ingresso 3" 												<light>				(gLocaleTecnico, gSoulis
 Switch SoulissIn4_0 "Ingresso 4" 												<light>				(gLocaleTecnico, gSouliss) 							{souliss="T13:0:3", autoupdate="false"}
 Switch SoulissRele1_0 "Stato impianto di sicurezza [MAP(souliss.map):%s]" 		<light>				(gLocaleTecnico, gSouliss) 							{souliss="T11:0:4", autoupdate="false"}
 Switch SoulissRele2_0 "Relè valvola piano terra" 								<groundfloor>		(gLocaleTecnico, gSouliss) 							{souliss="T11:0:5", autoupdate="false"}
-Switch SoulissRele3_0 "Relè 3" 													<light>				(gLocaleTecnico, gSouliss) 							{souliss="T11:0:6", autoupdate="false"}
+Switch SoulissRele3_0 "Relè 3" 													<light>				(gLocaleTecnico, gSouliss) 							{souliss="T11:0:6", autoupdate="false", mqtt=">[mqtt:openhab/out/Robo500/command:command:ON:default]"} 
 Switch SoulissRele4_0 "Relè 4" 													<light>				(gLocaleTecnico, gSouliss, G_PresenceSimulation) 	{souliss="T11:0:7", autoupdate="false"}
 Number SoulissUmidity_0		"Umidità stanza [%.1f %%]" 							<humidity> 			(gLocaleTecnico, gSouliss, gUmidita)					{souliss="T53:0:8"}
 Number SoulissTemperature_0	"Temperatura stanza [%.1f °C]" 						<temperature> 		(gLocaleTecnico, gSouliss, avgTemperatura, gTemperatura) {souliss="T52:0:10"}
