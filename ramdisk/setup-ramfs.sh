@@ -5,6 +5,9 @@
 #   /etc/openhab2/ramdisk/setup-ramfs.sh
 #   mkdir /var/log/openhab2
 #   chmod 777 /var/log/openhab2
+#   mkdir /var/log/mosquitto
+#   touch /var/log/mosquitto/mosquitto.log
+#   chmod 777 /var/log/mosquitto/mosquitto.log
 ######
 #copia questo script nella dir /etc/openhab2/ramdisk/setup-ramfs.sh
 

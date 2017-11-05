@@ -30,7 +30,7 @@ Switch MotionSensor1_PT_Tamper					"Stato tamper [MAP(zwave_tamper.map):%s]" 		<
 Number MotionSensor1_PT_Luminosita 				"Luminosità [%.2f Lux]" 						<sun> 				(avgLuminosita, gLuminosita, gPTStudio)						{channel="zwave:device:controller:node3:sensor_luminance"}
 Number MotionSensor1_PT_Batteria 				"Stato batteria [%d %%]"						<battery> 			(avgBatteria, gPTStudio)								    {channel="zwave:device:controller:node3:battery-level"}
 
-Switch WallPlug1_PT_Presa 						"Wall Plug presa" 								<poweroutlet>		(avgPresa, gPTBagno)							            {channel="zwave:device:controller:node2:switch_binary"} 
+Switch WallPlug1_PT_Presa 						"Wall Plug presa" 								<poweroutlet>		(avgPresa, gPTBagno)							            {channel="zwave:device:controller:node2:switch_binary", mqtt= "< [broker1:openhab/out/ir/command:command:ON:key_1], <[broker1:openhab/out/ir/command:command:OFF:key_2]", autoupdate="false"}
 Number WallPlug1_PT_Potenza 					"Wall Plug potenza istantanea [%.1f W]" 		<heating>			(sumPotenza, gPTBagno, gPotenza)							{channel="zwave:device:controller:node2:meter_watts"}
 Number WallPlug1_PT_Energia 					"Wall Plug Totale energia [%.2f KWh]" 			<heating>			(sumEnergia, gPTBagno, gEnergia)						   	{channel="zwave:device:controller:node2:meter_kwh"}
 
@@ -42,8 +42,8 @@ Switch MySkyStatus						"MySky Stato" 								                                  
 Number MySkyPingTime 					"Ping MySky [%.1f ms]"  <returnpipe>	                                                                         	(gPTSoggiorno) {channel="network:device:mysky:time"}
 
 
-Number Fritz200temperatura		"Temperatura rilevata [%.1f C°]"		<temperature>	
-Switch 	Fritz200switch			"Switch presa"			<poweroutlet>
+//Number Fritz200temperatura		"Temperatura rilevata [%.1f C°]"		<temperature>	
+//Switch 	Fritz200switch			"Switch presa"			<poweroutlet>
 
 
 //Switch in1 "In GPIO5" {mqtt=">[broker1:device/gpio5:command:ON:ON], >[broker1:device/gpio5:command:OFF:OFF]", autoupdate="false"}
