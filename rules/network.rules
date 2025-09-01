@@ -1,0 +1,71 @@
+var Timer timer_ritardo_nginx = null
+var int stato_nginx = 1
+rule "Network case"
+    when
+        Member of gNetwork changed
+    then
+    val host = triggeringItem
+    switch(host.state) {
+        case ON: {
+            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot") 
+            //logInfo("Network-case", "Host in ON " + host.name)
+            logInfo("Network case ON", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
+                telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+            }
+            else if (host.name == "Nginx_443") { //Se l'host che è andato ON è nginx spegni il timer_ritardo_nginx
+                    timer_ritardo_nginx?.cancel()
+                    timer_ritardo_nginx = null
+                    logInfo("Network case ON", "NGINX connesso (ON), timer_ritardo_nginx spento")
+                    if (stato_nginx == 0) { //invia l'evento solo se il timer_ritardo_nginx era terminato con esecuzione
+                        telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+                        stato_nginx = 1
+                    }
+            }
+        }
+        case OFF: {
+            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+            logInfo("Network case OFF", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
+                telegramActions.sendTelegram("Host " + host.name + " perso dalla rete!!!!")
+            }
+            else if (host.name == "Nginx_443") {
+                logInfo("Network case OFF", "NGINX perso dalla rete (OFF), Parte timer_ritardo_nginx 30min")
+                if (timer_ritardo_nginx === null) {
+                    timer_ritardo_nginx = createTimer(now.plusMinutes(30), [| //timer per ritardare l'invio della segnalazione
+                        logInfo("Network case OFF", "NGINX perso dalla rete, timer_ritardo_nginx di 30 minuti terminato")
+                        telegramActions.sendTelegram("Host " + host.name + " perso dalla rete da oltre 15 minuti!")  
+                        stato_nginx = 0
+                    ])
+                }
+            }
+            else if (host.name == "Graziella") { //Dopo che Graziella esce la mattina spegni condizionatore soggiorno & letto
+                if (now.getHour >= 7 && now.getHour <= 9 && DaikinACUnit_Mode_Soggiorno.state == "HEAT" && DaikinACUnit_Power_Soggiorno.state == ON && (isBankHoliday == false || isWeekend == false)) {
+                    DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
+                    DaikinACUnit_Power_Letto.sendCommand(OFF)
+                    logInfo("Network case OFF", "Cond Soggiorno e Letto Spento perchè Graziella è uscita, il modo è HEAT e siamo tra le 7 e le 9 e non è festa e non è fine settimana")
+                }
+                logInfo("Network case OFF", "Graziella è uscita, ma non ci sono le condizioni per spegnere i condizionatori")
+                logInfo("Network case OFF", "Ora attuale: " + now.getHour)
+                logInfo("Network case OFF", "Modalità Condizionatore soggiorno: " + DaikinACUnit_Mode_Soggiorno.state)
+                logInfo("Network case OFF", "È festa: " + isBankHoliday + ", È weekend: " + isWeekend)
+            }
+            else if (host.name == "Alice") { //Dopo che Alice esce la mattina spegni condizionatore cameretta e studio
+                if (now.getHour >= 7 && now.getHour <= 9 && DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON && (isBankHoliday == false || isWeekend == false)) {
+                    DaikinACUnit_Power_Cameretta.sendCommand(OFF)
+                    DaikinACUnit_Power_Studio.sendCommand(OFF)
+                    logInfo("Network case OFF", "Cond Cameretta Spento perchè Alice è assente, il modo è HEAT e siamo tra le 7 e le 9 e non è festa e non è fine settimana")
+                    }            
+                }
+            else {
+                logInfo("Network-case OFF", "Case OFF, else " + host.name)
+                logInfo("Network case OFF", "Ora attuale: " + now.getHour)
+                logInfo("Network case OFF", "Modalità Condizionatore soggiorno: " + DaikinACUnit_Mode_Soggiorno.state)
+                logInfo("Network case OFF", "È festa: " + isBankHoliday + ", È weekend: " + isWeekend)  
+            }
+        }
+        default: {
+            logInfo("Network case DEFAULT", "Caso default")
+        }
+    }
+end

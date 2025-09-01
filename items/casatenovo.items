@@ -1,0 +1,10 @@
+Number Scena "Scena" { synonyms="Condizionatore", ga="Scene" }
+//Number Modalita
+
+// gestione presenza
+Group:Switch:AND(OFF,ON) gPresence_Sensors <presence> // all presence sensors belong to this group
+Switch Presence "Someone is Present" <presence> // master presence switch, represents to the rest of OH where someone is home
+Switch Presence_Timer { expire="15m,command=OFF" } // anti-flapping timer
+Switch Presence_Auto <switch>  //Presenza automatica o manuale
+Switch VoglioDormire <switch>
+String Tapparelle  <switch>

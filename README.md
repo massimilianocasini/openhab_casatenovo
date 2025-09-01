@@ -1,0 +1,1 @@
+# openhab5_casatenovo

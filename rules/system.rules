@@ -1,0 +1,32 @@
+
+rule "Switch per chiudere aprire o fermare tapparelle"
+when 
+    Item Tapparelle received command
+then
+switch(receivedCommand.toString.toUpperCase) {
+    case "DOWN" : {
+        logInfo("System", "Chudi Tapparelle" )
+        TapparellaLetto.sendCommand(DOWN)
+        TapparellaStudio.sendCommand(DOWN)
+        TapparellaSoggiorno.sendCommand(DOWN)
+        TapparellaCameretta.sendCommand(DOWN)
+    }
+    case "UP" : {
+        logInfo("System", "Apri Tapparelle" )
+        TapparellaLetto.sendCommand(UP)
+        TapparellaStudio.sendCommand(UP)
+        TapparellaSoggiorno.sendCommand(UP)
+        TapparellaCameretta.sendCommand(UP)  
+    }
+    case "STOP" : {
+        logInfo("System", "STOP Tapparelle" )
+        TapparellaLetto.sendCommand(STOP)
+        TapparellaStudio.sendCommand(STOP)
+        TapparellaSoggiorno.sendCommand(STOP)
+        TapparellaCameretta.sendCommand(STOP)  
+    }
+    default: {
+
+    }
+}
+end    

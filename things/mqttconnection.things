@@ -1,0 +1,24 @@
+Bridge mqtt:broker:cm4home [ host="cm4home.local", secure=false, username="openhabian", password="openhabian" ]{
+  Thing topic prodino "Prodino" @ "Soggiorno" { 
+
+      Channels:
+
+        Type number : ingresso1 "Stato chiave antifurto" [ stateTopic = "prodino/input/1/state"]
+        Type number : ingresso2 "Allarme antifurto" [ stateTopic = "prodino/input/2/state" ]
+        Type number : ingresso3 "Assenza 220V" [ stateTopic = "prodino/input/3/state" ]
+        Type number : ingresso4 "Anomalia" [ stateTopic = "prodino/input/4/state" ]
+        Type switch : output1 "Alarm system key" [commandTopic = "prodino/relay/1/set", on = "ON", off = "OFF"]
+  }
+
+  Thing topic cm3panel "CM3PANEL" @ "Cucina" {
+      Channels:
+        Type string : system "Cm3Panel System" [ stateTopic = "cm3panel/system", commandTopic = "cm3panel/system"]
+  }
+  Thing topic flussometro "tasmota" @ "Garage" {
+      Channels:
+        Type number : flusso "Contatore Acqua" [ stateTopic = "tele/tasmota_026BB3/SENSOR", transformationPattern = "JSONPATH:$.COUNTER.C1"]
+        Type switch : resetFlusso "Reset contatore acqua" [commandTopic = "cmnd/tasmota_026BB3/counter1", on = "0"]
+        Type switch : elettrovalvola "Elettrovalvola acqua" [commandTopic = "cmnd/tasmota_026BB3/POWER", on = "ON", off = "OFF"]
+        Type string : lwt "Last Will and Testament" [ stateTopic = "tele/tasmota_026BB3/LWT", on = "Online", off = "Offline"]
+  }
+} 

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "openhab_rules_tools": "^2.1.0"
+  }
+}

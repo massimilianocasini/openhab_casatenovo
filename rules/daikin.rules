@@ -1,0 +1,96 @@
+
+var Timer myTimer_daikin = null // Timer per il controllo del cambio di modalità dei condizionatori
+
+rule "Forzatura setpoint sui condizionatori al cambio di Modalità"
+when
+        Member of gEqCondMode changed
+then
+
+        val item = triggeringItem
+
+        logInfo("CondMode", "Item che ha cambiato stato " + item.name + " " + item.state ) 
+        
+        if (item.state == "COLD") { //Modalità estate
+          if (myTimer_daikin !== null) {
+            logInfo("rules", "Timer COLD rescheduled")
+              myTimer_daikin.reschedule(now.plusSeconds(15))
+          } else {
+            logInfo("rules", "Timer COLD created")
+              myTimer_daikin = createTimer(now.plusSeconds(15), [|
+              gEqCondMode.sendCommand("COLD")
+              gEqCondSetPoint.sendCommand(28)
+              logInfo("CondMode", "Forzato passaggio a COLD a 28° di tutti i condizionatori " )
+              myTimer_daikin = null
+            ])
+          }
+        return // Esce dalla regola dopo aver gestito la modalità COLD
+        }
+        if (item.state == "HEAT") {  //Modalità inverno
+          if (myTimer_daikin !== null) {
+            logInfo("rules", "Timer HEAT rescheduled")
+              myTimer_daikin.reschedule(now.plusSeconds(15))
+          } else {
+          myTimer_daikin(now.plusSeconds(15), [|
+            logInfo("rules", "Timer HEAT created")
+            gEqCondMode.sendCommand("HEAT")
+            gEqCondSetPoint.sendCommand(22)
+            logInfo("CondMode", "Forzato passaggio a HEAT a 22° di tutti i condizionatori")
+            myTimer_daikin = null
+          ])
+          }
+        return // Esce dalla regola dopo aver gestito la modalità HEAT
+        }
+        else {
+            logInfo("rules", "Timer OTHER canceled")
+            myTimer_daikin?.cancel()
+            myTimer_daikin = null
+        }
+        
+end
+
+rule "Timer Condizionamento DaikinACUnit_Power_Studio"
+  when
+    Item DaikinACUnit_ac_timer_on_off_Studio changed
+  then
+    if (DaikinACUnit_ac_timer_on_off_Studio.state == ON ) {
+      if  (DaikinACUnit_ac_timer_Studio.state == 0) {
+        DaikinACUnit_ac_timer_Studio.postUpdate(60)
+      }
+      DaikinACUnit_Power_Studio.sendCommand(ON)
+      
+      createTimer(now.plusMinutes((DaikinACUnit_ac_timer_Studio.state as Number).intValue),  [ |
+        DaikinACUnit_Power_Studio.sendCommand(OFF)
+        DaikinACUnit_ac_timer_on_off_Studio.sendCommand(OFF)
+        DaikinACUnit_ac_timer_Studio.postUpdate(0)
+      ])
+     }
+     else
+        DaikinACUnit_ac_timer_Studio.postUpdate(0)
+end
+
+rule "Spegni condizionamento la notte se in HEAT"
+when 
+Time cron "0 30 23 ? * * *"
+then
+ if (DaikinACUnit_Mode_Studio.state=="HEAT"){
+     DaikinACUnit_Power_Studio.sendCommand(OFF)
+ }
+  if (DaikinACUnit_Mode_Soggiorno.state=="HEAT"){
+     DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
+ }
+  if (DaikinACUnit_Mode_Cameretta.state=="HEAT"){
+     DaikinACUnit_Power_Cameretta.sendCommand(OFF)
+ }
+  if (DaikinACUnit_Mode_Letto.state=="HEAT"){
+     DaikinACUnit_Power_Letto.sendCommand(OFF)
+ }
+end
+
+rule "Imposta condizionamento a Umidificatore nel caso sia Raffrescamento di notte"
+when 
+  Time cron "0 00 23 ? * * *"
+then
+ if (gEqCondMode.state=="COLD"){
+     gEqCondMode.sendCommand("DEHUMIDIFIER")
+ }
+end
