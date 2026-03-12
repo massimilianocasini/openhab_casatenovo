@@ -1,0 +1,174 @@
+// ============================================================
+// VARIABILI GLOBALI
+// flag: tiene traccia di chi ha acceso la luce e a quale livello
+//   0 = spenta (o non accesa da questa regola)
+//   1 = accesa a 15% (buio parziale, sole < 10°, orario diurno/serale)
+//   2 = accesa a 45% (sole < -20°, massima oscurità, orario diurno/serale)
+//   3 = accesa a 15% temporaneamente (luce naturale parziale, sole 10-20°)
+//   4 = accesa a 20% (fascia notturna 23:30-06:00, luce di cortesia minima)
+// corridoioTimer: timer per lo spegnimento/abbassamento ritardato
+// ============================================================
+var int flag = 0
+var Timer corridoioTimer = null
+
+rule "Accendi luce corridoio"
+when
+    Item FGBS222_013_Input2 changed   // Sensore di movimento corridoio
+then
+    // Leggiamo subito i valori correnti e li salviamo in variabili locali
+    // per evitare letture multiple inconsistenti durante l'esecuzione
+    val int hour   = now.getHour
+    val int minute = now.getMinute
+    val int dimmer = (FGD211_003_SwitchDimmer.state as Number).intValue
+
+    // Fascia notturna profonda: 23:30 → 06:00
+    // Calcoliamo un booleano per rendere le condizioni più leggibili
+    val boolean fasciaNotturna = (hour == 23 && minute >= 30) || hour < 6
+
+    // ============================================================
+    // BLOCCO 1 — ACCENSIONE
+    // Condizioni necessarie:
+    //   a) Il sensore si è appena attivato (movimento rilevato)
+    //   b) La luce è spenta o al livello di cortesia (≤ 10%)
+    //      → evita di interferire se qualcuno ha già alzato la luce manualmente
+    // ============================================================
+    if (FGBS222_013_Input2.state == ON && dimmer <= 10) {
+
+        // Se c'era un timer di spegnimento in attesa, annullalo:
+        // il movimento ricominciato significa che qualcuno è ancora presente
+        if (corridoioTimer !== null) {
+            corridoioTimer.cancel()
+            corridoioTimer = null
+        }
+
+        // --- Caso A: fascia notturna profonda (23:30-06:00) ---
+        // Luce di cortesia minima al 20%: abbastanza per orientarsi senza
+        // disturbare il sonno. Verrà spenta completamente dopo 25 secondi (flag=4)
+        if (fasciaNotturna) {
+            flag = 4
+            FGD211_003_SwitchDimmer.sendCommand(20)
+
+        // --- Caso B: sole molto basso (< -20°), orario 06:00-23:30 ---
+        // Usiamo "0 - 20" invece di "-20" per evitare il bug del parser
+        // Xtend con i letterali negativi nei confronti diretti sullo State.
+        // Massima oscurità fuori dalla fascia notturna: accendiamo al 45%
+        } else if (SunElevation.state < 0 - 20) {
+            flag = 2
+            FGD211_003_SwitchDimmer.sendCommand(45)
+
+        // --- Caso C: buio parziale (sole tra -20° e 10°), orario 06:00-23:30 ---
+        // Luce ridotta: basta il 15% per orientarsi senza abbagliare
+        } else if (SunElevation.state < 10) {
+            flag = 1
+            FGD211_003_SwitchDimmer.sendCommand(15)
+
+        // --- Caso D: luce naturale parziale (sole tra 10° e 20°), orario 06:00-23:30 ---
+        // Accensione simbolica al 15%: la luce naturale è quasi sufficiente,
+        // ma un minimo di supporto aiuta. Sarà spenta completamente dal timer (flag=3)
+        } else if (SunElevation.state < 20) {
+            flag = 3
+            FGD211_003_SwitchDimmer.sendCommand(15)
+
+        // --- Caso E: piena luce naturale (sole ≥ 20°), orario 06:00-23:30 ---
+        // Non facciamo nulla: c'è abbastanza luce, inutile sprecare energia
+        }
+
+    // ============================================================
+    // BLOCCO 2 — SPEGNIMENTO / ABBASSAMENTO RITARDATO
+    // Condizioni necessarie:
+    //   a) Il sensore si è appena disattivato (nessun movimento)
+    //   b) flag > 0: la luce era stata accesa da questa regola
+    //      → non tocchiamo luci accese manualmente dall'utente
+    // ============================================================
+    } else if (FGBS222_013_Input2.state == OFF && flag > 0) {
+
+        // Parametri del ritardo: dipendono dal caso in cui ci troviamo
+        var int expectedLevel  // Livello che ci aspettiamo di trovare sul dimmer
+        var int delaySeconds   // Secondi di attesa prima di cambiare
+        var int targetLevel    // Livello a cui portare il dimmer dopo il ritardo
+
+        switch(flag) {
+
+            // Caso C (buio parziale): eravamo a 15%, torniamo a 10% (luce di cortesia)
+            case 1: { expectedLevel = 15; delaySeconds = 20; targetLevel = 10 }
+
+            // Caso B (sole < -20°): eravamo a 45%, torniamo a 10% (luce di cortesia)
+            case 2: { expectedLevel = 45; delaySeconds = 50; targetLevel = 10 }
+
+            // Caso D (luce naturale parziale): eravamo a 15%, spegniamo completamente
+            case 3: { expectedLevel = 15; delaySeconds = 20; targetLevel = 0  }
+
+            // Caso A (fascia notturna 23:30-06:00): eravamo a 20%, spegniamo completamente
+            // dopo 25 secondi senza lasciare luce di cortesia per non disturbare il sonno
+            case 4: { expectedLevel = 20; delaySeconds = 25; targetLevel = 0  }
+
+            // Caso di sicurezza: non dovrebbe mai accadere, ma evitiamo comportamenti indefiniti
+            default: { expectedLevel = 0 - 1; delaySeconds = 20; targetLevel = 0 }
+        }
+
+        // Verifica che il dimmer sia ancora al livello che avevamo impostato:
+        // se l'utente ha cambiato la luce manualmente nel frattempo, non interveniamo
+        if (dimmer == expectedLevel) {
+
+            // Annulla un eventuale timer precedente ancora in attesa
+            if (corridoioTimer !== null) {
+                corridoioTimer.cancel()
+            }
+
+            // Catturiamo i valori in variabili "val" immutabili prima di passarli alla lambda:
+            // le lambda in openHAB DSL catturano per riferimento, quindi senza questo accorgimento
+            // rischieremmo di leggere valori già modificati al momento dell'esecuzione del timer
+            val int finalExpected = expectedLevel
+            val int finalTarget   = targetLevel
+
+            corridoioTimer = createTimer(now.plusSeconds(delaySeconds), [|
+
+                // Ricontrolliamo anche dentro il timer: potrebbero essere passati
+                // decine di secondi e la situazione potrebbe essere cambiata
+                if ((FGD211_003_SwitchDimmer.state as Number).intValue == finalExpected) {
+                    FGD211_003_SwitchDimmer.sendCommand(finalTarget)
+                }
+
+                // Reset dello stato: la regola è tornata a riposo
+                flag = 0
+                corridoioTimer = null
+            ])
+        }
+    }
+end
+
+// Alle 23:30 inizia la fascia notturna: accende la luce di cortesia a 10%
+// solo se era già spenta, per non interferire con uso manuale
+rule "Corridoio fascia notturna ON"
+when
+    Time cron "0 30 23 * * ? *"
+then
+    if ((FGD211_003_SwitchDimmer.state as Number).intValue == 0) {
+        FGD211_003_SwitchDimmer.sendCommand(10)
+    }
+end
+
+// Se durante la fascia notturna (23:30-06:00) il dimmer viene spento,
+// lo riportiamo subito a 10% — controllo ad ogni cambio di stato del dimmer
+rule "Corridoio ripristino cortesia notturna"
+when
+    Item FGD211_003_SwitchDimmer changed
+then
+    val int hour   = now.getHour
+    val int minute = now.getMinute
+    val int dimmer = (FGD211_003_SwitchDimmer.state as Number).intValue
+    val boolean fasciaNotturna = (hour == 23 && minute >= 30) || hour < 6
+
+    // Se siamo in fascia notturna e la luce è stata spenta, ripristina a 10%
+    if (fasciaNotturna && dimmer == 0) {
+        FGD211_003_SwitchDimmer.sendCommand(10)
+    }
+end
+
+// Alle 06:00 termina la fascia notturna: spegne la luce di cortesia
+rule "Corridoio fascia notturna OFF"
+when
+    Time cron "0 0 6 * * ? *"
+then
+    FGD211_003_SwitchDimmer.sendCommand(0)
+end

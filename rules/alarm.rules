@@ -1,7 +1,8 @@
-var Timer myTimer_alarm = 0
+var Timer myTimer_alarm = null
 val int timeoutMinutes = 5 // choose an appropriate value
 var int alarmcount = 0 //Conteggio numero di allarmi
-var int receipt = null
+var receiptRete = null
+var receiptAllarme = null
 rule "Antifurto cambio stato swicth case"
 when 
     Item Prodino0_optoIn0 changed
@@ -10,10 +11,10 @@ val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
 
 switch(Prodino0_optoIn0.state) {
   case  1 : { //Antifurto inserito
-    if(myTimer_alarm == 0) {
+    if(myTimer_alarm === null) {
       myTimer_alarm = createTimer(now.plusMinutes(timeoutMinutes ), [|
-      myTimer_alarm = 0
-      logInfo("Alarm.rules", "Timer su inserimento scaduto" )
+      myTimer_alarm = null
+      logInfo("Alarm.rules", "Timer su inserimento scaduto, da ora un disinserimento farà riaprire le serrande" )
       ])
     }
     else {
@@ -21,7 +22,11 @@ switch(Prodino0_optoIn0.state) {
     }
     telegramActions.sendTelegram("Antifurto INSerito!")
     logInfo("Alarm.rules", "Antifurto INSERITO")
-    FGS221_016_SwitchBinary2.sendCommand(OFF ) //Spegni presa1 soggiorno
+    FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
+    SonosEraStudio_Control.sendCommand(PAUSE) //Spegni Sonos Studio
+    SonosEraLetto_Control.sendCommand(PAUSE) //Spegni Sonos Letto
+    SonosBeam_Control.sendCommand(PAUSE) //Spegni Sonos Beam
+
     if (DaikinACUnit_Mode_Studio.state == "HEAT" && DaikinACUnit_Power_Studio.state == ON) {
         DaikinACUnit_Power_Studio.sendCommand(OFF)
         telegramActions.sendTelegram("Condizionatore Studio spento")
@@ -40,10 +45,10 @@ switch(Prodino0_optoIn0.state) {
         telegramActions.sendTelegram("Condizionatore Letto spento")
     }
     if (now.getHour() < 1 || now.getHour() >=3  ) {
-        TapparellaLetto.sendCommand(DOWN)
-        TapparellaStudio.sendCommand(DOWN)
-        TapparellaSoggiorno.sendCommand(DOWN)
-        TapparellaCameretta.sendCommand(DOWN)
+        TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
+        TapparellaStudio.sendCommand(92)
+        TapparellaSoggiorno.sendCommand(97)
+        TapparellaCameretta.sendCommand(97)
         logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.getHour )
         Osram01S.sendCommand(OFF) //Spegni luce natale
         FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
@@ -56,15 +61,15 @@ switch(Prodino0_optoIn0.state) {
     telegramActions.sendTelegram("Antifurto DIsInserito!")
     logInfo("Alarm.rules", "Antifurto DISINSERITO")
    // Osram01S.sendCommand(ON) //Accendi luce natale
-    if (SunElevation.state > -3 && now.getHour > 8 && myTimer_alarm == 0) {
+    if (SunElevation.state >= -10 && now.getHour > 8 && myTimer_alarm === null) {
         TapparellaLetto.sendCommand(UP)
         TapparellaStudio.sendCommand(UP)
         TapparellaSoggiorno.sendCommand(UP)
         TapparellaCameretta.sendCommand(UP)
     }
     if (now.getHour() > 13 && now.getHour() <=23  ) {
-        FGS221_016_SwitchBinary2.sendCommand(ON)
-        logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.getHour )
+       // FGS221_016_SwitchBinary2.sendCommand(ON)
+       // logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.getHour )
     }
   }
 }
@@ -76,24 +81,21 @@ when
 then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
   val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+ 
   if(Prodino0_optoIn1.state == 1) {
     alarmcount = 1
-    var receipt = pushoverActions.sendPriorityMessage("Allarme antifurto", "openhab3", 2)
+    receiptAllarme = pushoverActions.sendPriorityMessage("Allarme antifurto", "openhab3", 2)
     telegramActions.sendTelegram("Allarme antifurto")
-    // wait for your cancel condition
-      if( receipt !== NULL ) {
-        pushoverActions.cancelPriorityMessage(receipt)
-        receipt = NULL
-      }
+
   }
   else if (Prodino0_optoIn1.state == 0 && alarmcount == 1) {
     pushoverActions.sendMessage("FINE Allarme antifurto", "openhab3")
     telegramActions.sendTelegram("FINE Allarme antifurto")
     alarmcount = 0
-    // wait for your cancel condition
-    if( receipt !== NULL ) {
-      pushoverActions.cancelPriorityMessage(receipt)
-      receipt = NULL
+    // Cancella il messaggio priority SOLO quando l'allarme finisce
+    if( receiptAllarme !== null ) {
+      pushoverActions.cancelPriorityMessage(receiptAllarme)
+      receiptAllarme = null
     }
   }
 end
@@ -103,22 +105,17 @@ when
 then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
   val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
-  if(Prodino0_optoIn2.state == 0) {
-    var receipt = pushoverActions.sendPriorityMessage("Ripristino 220V", "openhab3", 2)
-    telegramActions.sendTelegram("Ripristino 220V")
-    // wait for your cancel condition
-    if( receipt !== NULL ) {
-      pushoverActions.cancelPriorityMessage(receipt)
-      receipt = NULL
+  if(Prodino0_optoIn2.state == 1) {      // Mancanza 220V
+        receiptRete = pushoverActions.sendPriorityMessage("Mancanza 220V", "openhab3", 2)
+        telegramActions.sendTelegram("Mancanza 220V")
+    }
+  else if (Prodino0_optoIn2.state == 0) { // Ripristino 220V
+        telegramActions.sendTelegram("Ripristino 220V")
+        pushoverActions.sendMessage("Ripristino 220V", "openhab3")
+        // Cancella il messaggio priority SOLO quando l'allarme finisce
+        if(receiptRete !== null) {  
+            pushoverActions.cancelPriorityMessage(receiptRete)
+            receiptRete = null
         }
-  }
-  else if (Prodino0_optoIn2.state == 1) {
-    var receipt = pushoverActions.sendPriorityMessage("Mancanza 220V", "openhab3", 2)
-    telegramActions.sendTelegram("Mancanza 220V")
-    // wait for your cancel condition
-    if( receipt !== NULL ) {
-      pushoverActions.cancelPriorityMessage(receipt)
-      receipt = NULL
-        }
-  }
+    }
 end

@@ -1,0 +1,23 @@
+rule "MQTT stato device case"
+    when
+        Member of gMQTT changed
+    then
+    val host = triggeringItem
+    switch(host.state) {
+        case ON: {
+            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot") 
+            //logInfo("Network-case", "Host in ON " + host.name)
+            logInfo("MQTT stato device case ON", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            {
+                telegramActions.sendTelegram("Host " + host.name + " ONLINE")
+            }
+        }
+        case OFF: {
+            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+            logInfo("MQTT stato device case OFF", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            {
+                telegramActions.sendTelegram("Host " + host.name + " OFFLINE !!!")
+            }
+        }
+    }
+end

@@ -1,0 +1,5 @@
+version=V2
+url=http://localhost:8086
+db=casatenovo
+token=fd3DWCTEtPOWJpVeBZkOT655ZaxUuG2MVWixVATx46pHcuCDwmEmTTrF2FuMdlXGDktygeby6b_eppYhjNP9ww==
+retentionPolicy=openhab

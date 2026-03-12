@@ -5,8 +5,7 @@ Strategies
 	everyHour : "0 0 * * * ?"
 	everyDay : "0 0 0 * * ?"
 
-	// if no strategy is specified for an Item entry below, the default list will be used
-	default = everyChange
+
 }
 
 /*
@@ -19,12 +18,150 @@ Strategies
  */ 
 Items
 {
-	gInfluxdb* : strategy =  everyChange, everyHour, restoreOnStartup
+	//gInfluxdb* : strategy =  everyChange, everyHour, restoreOnStartup
 	//gInfluxdb1* : strategy =  everyMinute, restoreOnStartup
-	gAvgTemperatura, gAvgPressione, gAvgUmidita, gInfluxdb1*, gAvgTemperatura*, gAvgUmidita*, gAvgPressione*, gBattery*  : strategy = everyChange, restoreOnStartup
+	gAvgTemperatura, gAvgPressione, gAvgUmidita, gInfluxdb1*, gAvgTemperatura*, gAvgUmidita*, gAvgPressione*, gBattery*, gInfluxdb*  : strategy = everyUpdate, restoreOnStartup
 	//gAvgUmidita* : strategy = everyMinute, restoreOnStartup
 	//gAvgPressione : strategy = everyMinute, restoreOnStartup
 	//gAVGDaikinTemp : strategy = everyMinute, restoreOnStartup
 	gSpeedtest* : strategy = everyChange, restoreOnStartup
-	gRadar*: strategy =  everyChange, restoreOnStartup
+	//gRadar*: strategy =  everyChange, restoreOnStartup
+	//SCD40_AirQuality1: strategy = everyChange, restoreOnStartup
 }
+/* Perfetto, ho il contenuto del documento. Ecco una spiegazione dettagliata delle **strategie predefinite di persistenza** di openHAB:
+
+## Strategie Predefinite di Persistenza
+
+Le strategie predefinite sono configurazioni built-in che determinano **quando** e **come** gli stati degli Item vengono salvati nel database di persistenza. Sono quattro:
+
+### 1. **everyChange**
+Persiste lo stato dell'Item **ogni volta che cambia**.
+
+**Quando usarla:**
+- Per monitorare Items il cui valore è importante tracciare ad ogni modifica
+- Esempi: interruttori on/off, stati di sicurezza, comandi critici
+- **Utile per**: analizzare la frequenza di cambiamenti, creare grafici accurati
+
+**Esempio pratico:**
+```
+Lights, SecurityStatus : strategy = everyChange
+```
+Se accendi una luce e la spegni 5 volte in un'ora, il database salverà 10 stati distinti (5 accensioni + 5 spegnimenti).
+
+***
+
+### 2. **everyUpdate**
+Persiste lo stato dell'Item **ogni volta che viene aggiornato**, anche se il valore **non cambia**.
+
+**Quando usarla:**
+- Quando hai sensori che generano frequenti letture, anche se il valore rimane costante
+- Quando serve documentare ogni acquisizione dati (anche se identica)
+- **Utile per**: audit trail, validazione di letture sensoriali, diagnostica
+
+**Differenza chiave da `everyChange`:**
+Se un sensore di temperatura legge "22°C" ogni minuto per un'ora:
+- **everyChange**: salva 1 solo stato (nessun cambio)
+- **everyUpdate**: salva 60 stati (una lettura ogni minuto)
+
+**Esempio pratico:**
+```
+Temperature, Humidity : strategy = everyUpdate
+```
+
+***
+
+### 3. **restoreOnStartup**
+**Non** persiste continuamente, ma **ripristina** l'ultimo stato salvato quando openHAB si riavvia.
+
+**Quando usarla:**
+- Per items il cui stato deve essere preservato dopo un riavvio
+- Esempi: modalità di riscaldamento, impostazioni di domotica attive, stati di sicurezza
+
+**Comportamento:**
+- All'avvio di openHAB, se uno stato è `UNDEF` (indefinito), viene caricato dal database
+- Se l'Item non ha uno stato salvato, rimane `UNDEF`
+
+**Esempio pratico:**
+```
+Heating_Mode, Notifications_Active : strategy = everyChange, restoreOnStartup
+```
+Se la "Modalità riscaldamento" era impostata a "COMFORT" prima del riavvio, sarà ripristinata a "COMFORT" all'accensione successiva.
+
+**Nota importante:** Non è necessario ripristinare tutti gli Items. Spesso sensori e dispositivi si aggiorneranno comunque (es. interruttori, sensori di umidità).
+
+***
+
+### 4. **forecast**
+Persiste e **ripristina stati futuri** (timestamped nel futuro).
+
+**Quando usarla:**
+- Per scenari pianificati in anticipo
+- Esempi: previsioni meteo programmate, timer futuri, comandi schedulati
+
+**Comportamento:**
+- Salva stati con timestamp nel futuro
+- Ripristina automaticamente questi stati nel momento programmato
+- **Consiglio**: usarla solo per items con dati futuri (non mescolare con dati storici)
+
+**Esempio pratico:**
+```
+ForecastedTemperature : strategy = forecast
+```
+
+**Avvertenza dal documento:**
+> "It is recommended to use different items for forecasted (i.e. future) values and historic data. As a result mixing `forecast` strategy with other strategies is not recommended (except `restoreOnStartup`)."
+
+***
+
+## Combinazioni di Strategie
+
+Puoi **combinare più strategie** sullo stesso Item:
+
+```
+Heating_Mode : strategy = everyChange, restoreOnStartup
+Temperature : strategy = everyUpdate, everyHour
+```
+
+**Risultato:**
+- `Heating_Mode`: salvato ad ogni cambio, ripristinato all'avvio
+- `Temperature`: salvato ad ogni aggiornamento **E** ogni ora
+
+Le strategie sono **additive** — tutte si applicano.
+
+***
+
+## Caso d'Uso Pratico Completo
+
+```
+Strategies {
+    everyHour : "0 0 * * * ?"      // Salva ogni ora (mezzanotte)
+    everyDay : "0 0 0 * * ?"       // Salva ogni giorno (mezzanotte)
+}
+
+Items {
+    // Interruttori: salva ad ogni cambio e ripristina all'avvio
+    Heating_Mode, Lights : strategy = everyChange, restoreOnStartup
+    
+    // Sensori temperatura: salva ad ogni aggiornamento + ogni ora
+    Temperature, Humidity : strategy = everyUpdate, everyHour
+    
+    // Tutti gli items: salva ogni giorno (escludendo Weather)
+    *, !Weather* : strategy = everyDay
+}
+```
+
+***
+
+## Quando Usare Cosa - Riepilogo
+
+| Strategy | Frequenza | Use Case |
+|----------|-----------|----------|
+| **everyChange** | Quando il valore cambia | Interruttori, stati critici, comandi |
+| **everyUpdate** | Ad ogni lettura/update | Sensori frequenti, audit trail |
+| **restoreOnStartup** | Al riavvio | Modalità, impostazioni, stati persistenti |
+| **forecast** | A timestamp futuri | Previsioni, timer, comandi programmati |
+
+Questo approccio ti consente di **ottimizzare lo storage** e **ridurre il carico del database** salvando solo ciò che è rilevante per ogni tipo di dato.
+
+Fonti
+[1] Persistence | openHAB https://www.openhab.org/docs/configuration/persistence.html */

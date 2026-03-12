@@ -1,0 +1,20 @@
+Strategies 
+{
+	everyMinute : "0 * * * * ?"
+	everyHour : "0 0 * * * ?"
+	everyDay : "0 0 0 * * ?"
+}
+
+Items { 
+SCD401_Temperature, 
+SCD401_Humidity, 
+SCD402_Temperature,
+SCD402_Humidity, 
+SonoOffT, 
+SonoOffH,
+FGMS001_008_Temp,
+ContatoreAcqua,
+OneCallAPIweatherandforecast_Current_Temperature,
+Power_Used,
+I_AC_Power_Value 										: strategy = everyMinute, restoreOnStartup
+}

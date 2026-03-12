@@ -1,0 +1,66 @@
+
+
+rule "Controllo Caldaia Cronotermostato"
+when
+  Time cron "0 * * * * ?" or // ogni minuto
+  Item SonoOffT changed or
+  Item Riscaldamento_Man_SP changed or
+  Item Riscaldamento_Modo changed or
+  Item ProgrammazioneCrono changed
+then
+  val dayNames = newArrayList("Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab")
+  val String oggi = dayNames.get(now.getDayOfWeek.getValue % 7)
+
+  var Map<String, List<Map<String, Object>>> prog = newHashMap
+  try {
+    prog = transform("JSONPATH", "$", ProgrammazioneCrono.state.toString) as Map<String, List<Map<String, Object>>>
+  } catch(Throwable t) {
+    logWarn("cronotermostato", "JSON programmazione invalida: " + t.getMessage)
+    return
+  }
+  
+  val List<Map<String, Object>> fasce = prog.getOrDefault(oggi, newArrayList)
+  val String oraCorrente = now.toString("HH:mm")
+  
+  var Number targetTemp = null
+  
+  for(fascia : fasce) {
+    val String inizio = (fascia.get("oraInizio") as String)
+    val String fine = (fascia.get("oraFine") as String)
+    val Number temp = (fascia.get("temp") as Number)
+    
+    if(oraCorrente >= inizio && oraCorrente < fine) {
+      targetTemp = temp
+      break
+    }
+  }
+
+  if(ModoFunzionamento.state == 2) { // disabilitato
+    OutputCaldaia.sendCommand(OFF)
+    return
+  }
+
+  if(ModoFunzionamento.state == 3) { // manuale
+    targetTemp = SetpointManuale.state as Number
+  }
+
+  if(targetTemp === null) {
+    OutputCaldaia.sendCommand(OFF)
+    return
+  }
+
+    val Number tempInterna = TemperaturaInterna.state as Number
+var Number laIsteresi = 0.5
+val Number ist = Isteresi.state as Number
+if (ist != null) {
+  laIsteresi = ist
+}
+
+  if(tempInterna <= (targetTemp - laIsteresi)) {
+    OutputCaldaia.sendCommand(ON)
+  } else if(tempInterna >= (targetTemp + laIsteresi)) {
+    OutputCaldaia.sendCommand(OFF)
+  }
+
+  logInfo("cronotermostato", "Caldaia: " + OutputCaldaia.state.toString + " Temp: " + tempInterna.toString + " Setpoint: " + targetTemp.toString)
+end

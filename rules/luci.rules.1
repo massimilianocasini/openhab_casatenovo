@@ -1,0 +1,84 @@
+var int flag = 0  // Tiene traccia del livello di luminosità impostato (0=spento, 1=basso, 2=alto, 3=temporaneo con luce naturale)
+var Timer corridoioTimer = null  // Timer per lo spegnimento ritardato
+
+rule "Accendi luce corridoio"
+when
+    Item FGBS222_013_Input2 changed  // Sensore di movimento corridoio
+then
+    
+    // === ACCENSIONE: sensore attivato, luce bassa o spenta, orario valido ===
+    if (FGBS222_013_Input2.state == ON && (FGD211_003_SwitchDimmer.state as Number) <= 10 && now.getHour > 12 && (now.getHour < 22 || now.getHour >= 9)) {  
+        
+        // Se c'è un timer di spegnimento in corso, cancellalo
+        if (corridoioTimer !== null) {
+            corridoioTimer.cancel()
+            corridoioTimer = null
+        }
+        
+        // Molto buio (sole sotto -20°): accendi più forte
+        if (SunElevation.state < -20) {
+            flag = 2
+            FGD211_003_SwitchDimmer.sendCommand(45)
+        }
+        // Abbastanza buio (sole sotto 10°): accendi piano
+        else if (SunElevation.state < 10) {
+            flag = 1
+            FGD211_003_SwitchDimmer.sendCommand(15)
+        }
+        // Sole tra 10° e 20°: accendi al minimo (poi si spegnerà)
+        else if (SunElevation.state < 20) {
+            flag = 3  // Nuovo flag per "accensione temporanea con luce naturale"
+            FGD211_003_SwitchDimmer.sendCommand(15)
+        }
+        // Se SunElevation >= 20°, c'è abbastanza luce naturale, non accendere
+    }
+    
+    // === SPEGNIMENTO/ABBASSAMENTO RITARDATO: sensore disattivato e luce accesa da noi ===
+    else if (FGBS222_013_Input2.state == OFF && flag > 0) {
+        
+        // Determina il livello atteso e il ritardo in base al flag
+        var int expectedLevel
+        var int delaySeconds
+        var int targetLevel  // Nuovo: livello di destinazione dopo il timer
+        
+        switch(flag) {
+            case 1: {  // Buio (sole < 10°): torna a 10
+                expectedLevel = 15
+                delaySeconds = 20
+                targetLevel = 10
+            }
+            case 2: {  // Molto buio (sole < -20°): torna a 10
+                expectedLevel = 45
+                delaySeconds = 50
+                targetLevel = 10
+            }
+            case 3: {  // Luce naturale sufficiente (sole 10-20°): spegni completamente
+                expectedLevel = 15
+                delaySeconds = 20
+                targetLevel = 0
+            }
+        }
+        
+        // Verifica che la luce sia ancora al livello che abbiamo impostato
+        if ((FGD211_003_SwitchDimmer.state as Number) == expectedLevel) {
+            
+            // Cancella eventuale timer precedente
+            if (corridoioTimer !== null) {
+                corridoioTimer.cancel()
+            }
+            
+            // Crea timer per spegnimento/abbassamento ritardato
+            val int finalTarget = targetLevel  // Cattura per la lambda
+            corridoioTimer = createTimer(now.plusSeconds(delaySeconds), [|
+                
+                // Ricontrolla lo stato prima di cambiare
+                if ((FGD211_003_SwitchDimmer.state as Number) == expectedLevel) {
+                    FGD211_003_SwitchDimmer.sendCommand(finalTarget)
+                }
+                
+                flag = 0
+                corridoioTimer = null
+            ])
+        }
+    }
+end

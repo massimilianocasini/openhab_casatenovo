@@ -1,173 +1,116 @@
-/* Certo, cerchiamo di chiarire l'uso di isNighttime nella rule per il controllo delle luci basata su alba, tramonto e offset.
+var Timer myTimer_astro2 = null
+var int iAutoOff = 0
+var int vTapparellastatus = 0
+//var int vLuceEsterna = 0
 
-Cos'è isNighttime?
-
-isNighttime è una variabile booleana che indica se è "notte" secondo la logica della nostra rule, tenendo conto degli offset. Assume valore true se è notte (e quindi le luci dovrebbero essere accese) e false se è giorno (e le luci dovrebbero essere spente).
-
-Come viene calcolato isNighttime?
-
-La riga di codice che calcola isNighttime è:
-
-Snippet di codice
-
-val isNighttime = nowOffset.isBefore(offsetSunrise) || nowOffset.isAfter(offsetSunset)
-Analizziamola nel dettaglio:
-
-nowOffset: Rappresenta l'ora corrente, ottenuta con OffsetDateTime.now(), completa di informazioni sull'offset del fuso orario.
-offsetSunrise: Rappresenta l'orario dell'alba con l'offset di un'ora (in questo caso, un'ora dopo l'alba).
-offsetSunset: Rappresenta l'orario del tramonto con l'offset di un'ora (in questo caso, un'ora prima del tramonto).
-nowOffset.isBefore(offsetSunrise): Questa parte dell'espressione verifica se l'ora corrente (nowOffset) è precedente all'alba con offset (offsetSunrise). In altre parole, controlla se è ancora "notte" prima che scatti l'ora dopo l'alba.
-nowOffset.isAfter(offsetSunset): Questa parte verifica se l'ora corrente (nowOffset) è successiva al tramonto con offset (offsetSunset). In altre parole, controlla se è già "notte" dopo che è passata l'ora prima del tramonto.
-||: Questo è l'operatore logico "OR" (oppure). L'intera espressione nowOffset.isBefore(offsetSunrise) || nowOffset.isAfter(offsetSunset) restituisce true se almeno una delle due condizioni è vera:
-O è prima dell'alba con offset (quindi è ancora notte).
-Oppure è dopo il tramonto con offset (quindi è già notte).
-Esempi pratici per capire meglio:
-
-Immaginiamo che:
-
-L'alba sia alle 7:00. Con l'offset di +1 ora, offsetSunrise sarà alle 8:00.
-Il tramonto sia alle 19:00. Con l'offset di -1 ora, offsetSunset sarà alle 18:00.
-Vediamo alcuni scenari:
-
-Ore 6:00 (prima dell'alba): nowOffset.isBefore(offsetSunrise) è true (perché 6:00 è prima di 8:00). Quindi, isNighttime è true.
-Ore 7:30 (dopo l'alba, ma prima dell'alba con offset): nowOffset.isBefore(offsetSunrise) è true (perché 7:30 è prima di 8:00). Quindi, isNighttime è true.
-Ore 9:00 (dopo l'alba con offset): nowOffset.isBefore(offsetSunrise) è false (perché 9:00 non è prima di 8:00). nowOffset.isAfter(offsetSunset) è false (perché 9:00 non è dopo le 18:00). Quindi, isNighttime è false.
-Ore 17:00 (prima del tramonto, ma dopo il tramonto con offset): nowOffset.isBefore(offsetSunrise) è false. nowOffset.isAfter(offsetSunset) è true (perché 17:00 è dopo le 18:00). Quindi, isNighttime è true.
-Ore 20:00 (dopo il tramonto): nowOffset.isBefore(offsetSunrise) è false. nowOffset.isAfter(offsetSunset) è true (perché 20:00 è dopo le 18:00). Quindi, isNighttime è true.
-Come viene usato isNighttime?
-
-isNighttime viene usato in un blocco if/else per controllare lo stato dell'interruttore e agire di conseguenza:
-
-Snippet di codice
-
-if (isNighttime) {
-    // Se isNighttime è true (è notte secondo la nostra logica con offset)
-    // Accendi la luce se non è già accesa
-    if (FGS222_004_SwitchBinary1.state != ON) {
-        FGS222_004_SwitchBinary1.sendCommand(ON)
-        logInfo("AlbaTramonto", "Luce accesa (un'ora prima del tramonto).")
-    }
-} else {
-    // Se isNighttime è false (è giorno secondo la nostra logica con offset)
-    // Spegni la luce se non è già spenta
-    if (FGS222_004_SwitchBinary1.state != OFF) {
-        FGS222_004_SwitchBinary1.sendCommand(OFF)
-        logInfo("AlbaTramonto", "Luce spenta (un'ora dopo l'alba).")
-    }
-}
-In sintesi, isNighttime ci permette di esprimere in modo conciso la condizione per cui le luci devono essere accese, considerando gli offset rispetto all'alba e al tramonto.
- 
- */
-//import java.time.OffsetDateTime
-//import java.time.Duration
-var Timer myTimer_astro = null
-var Timer myTimer_astro1 = null
-rule "Accensione_Spegnimento_Alba_Tramonto luce portone"
+rule "Apri tapparelle ad orario" // alle 7:00 dal lunedi al venerdi, solo se non è festivo e non è weekend, e se le tapparelle della camera da letto e dello studio sono ferme, e se la modalità "VoglioDormire" è disattivata
 when
-    Channel 'astro:sun:home:rise#event' triggered START or //Alba
-    Channel 'astro:sun:home:set#event' triggered START      //Tramonto
-
+    Time cron "00 00 07 ? * MON,TUE,WED,THU,FRI *"
 then
-    if (triggeringChannel.toString().contains("rise")) {
-        logInfo("AlbaTramonto", "Condizione trigger rise scattato (ALBA)")
-        // Programma un timer per spegnere la luce esattamente a offsetSunrise
-        if (myTimer_astro !== null) {
-            logInfo("rules astro", "Timer rescheduled")
-            myTimer_astro.reschedule(now.plusMinutes(1))
-        } else {
-        myTimer_astro = createTimer(now.plusMinutes(1), [|
-            if (FGS222_004_SwitchBinary1.state != OFF) {
-                FGS222_004_SwitchBinary1.sendCommand(OFF)
-                logInfo("AlbaTramonto", "Luce spenta (esattamente un minuto dopo l'alba).")
-            }
-        myTimer_astro = null
-        ])
+    if(Prodino0_optoIn0.state == "DISINSERITO" && isBankHoliday == false && isWeekend == false && TapparellaLettoStatus.state == "stop" && TapparellaStudioStatus.state == "stop" && VoglioDormire.state == OFF)  {
+        logInfo("Rule Astro", "Inizio procedura apertura serrande" )
+        if(myTimer_astro2 !== null)                     // timer already scheduled, so leave rule
+            return;
+            iAutoOff = 0                              // initialize counter
+            myTimer_astro2 = createTimer(now, [|
+            iAutoOff ++
+            switch(iAutoOff) {
+                case  1 : { 
+                        if(TapparellaLetto.state == 100) {
+                            TapparellaLetto.sendCommand(90) }
+                        if(TapparellaStudio.state == 100) {
+                            TapparellaStudio.sendCommand(90) }
+                        if(TapparellaSoggiorno.state == 100) {
+                            TapparellaSoggiorno.sendCommand(90) }
+                        if(TapparellaCameretta.state == 100) {
+                            TapparellaCameretta.sendCommand(90) }
+                        logInfo("Astro", "Procedura apertura serrande caso 1" )
+                        }
+                case  2 : {
+                       if(TapparellaLetto.state == 90) { 
+                            TapparellaLetto.sendCommand(70)}
+                        if(TapparellaStudio.state == 90) {
+                            TapparellaStudio.sendCommand(70) }
+                        if(TapparellaSoggiorno.state == 90) {
+                            TapparellaSoggiorno.sendCommand(70) }
+                    //    if(TapparellaCameretta.state == 90) {
+                    //        TapparellaCameretta.sendCommand(70) }
+                        logInfo("Astro", "Procedura apertura serrande caso 2" )
+                        }
+                case  3 : {
+                     //   if(TapparellaLetto.state == 70) { 
+                     //       TapparellaLetto.sendCommand(40) }
+                        if(TapparellaStudio.state == 70) {
+                            TapparellaStudio.sendCommand(40) }
+                        if(TapparellaSoggiorno.state == 70) {
+                            TapparellaSoggiorno.sendCommand(40) }
+                     //   if(TapparellaCameretta.state == 70) {
+                     //       TapparellaCameretta.sendCommand(40) }
+                        logInfo("Astro", "Procedura apertura serrande caso 3" )
+                        }
+         /*   case  4 : {
+                        if(TapparellaLetto.state == 40) { 
+                            TapparellaLetto.sendCommand(0) }
+                        if(TapparellaStudio.state == 40) {
+                            TapparellaStudio.sendCommand(0) }
+                        if(TapparellaSoggiorno.state == 40) {
+                            TapparellaSoggiorno.sendCommand(0) }
+                    //    if(TapparellaCameretta.state == 40) {
+                    //        TapparellaCameretta.sendCommand(0) }
+                        logInfo("Astro", "Procedura apertura serrande caso 4" )
+                        } */
+                default : {
+                myTimer_astro2 = null
+                logInfo("Rule Astro", "Fine procedura apertura serrande" )
+                return;
+                }
         }
-    }
-    else {
-        logInfo("AlbaTramonto", "Condizione trigger sunset scattato (TRAMONTO)")
-        if (FGS222_004_SwitchBinary1.state != ON) {
-            FGS222_004_SwitchBinary1.sendCommand(ON)
-            logInfo("AlbaTramonto", "Luce accesa al tramonto")
-        }
-        if (myTimer_astro1 !== null) {
-            logInfo("rules astro", "Timer rescheduled")
-            myTimer_astro1.reschedule(now.plusMinutes(60))
-        } else {
-        myTimer_astro1 = createTimer(now.plusMinutes(60), [|
-            TapparellaLetto.sendCommand(DOWN) // Chiude la tapparella al tramonto 
-            TapparellaStudio.sendCommand(DOWN) // Chiude la tapparella al tramonto
-            TapparellaSoggiorno.sendCommand(DOWN) // Chiude la tapparella al tramonto
-            TapparellaCameretta.sendCommand(DOWN) // Chiude la tapparela al tramonto 
-        myTimer_astro1 = null
-        ])
-        }
-    }
+        myTimer_astro2.reschedule(now.plusMinutes(15))
+        logInfo("Rule Astro", "Procedura apertura serrande timer reschedule" )
+    ])
+}
 end
 
-/*     val sunrise = Sunrise_Time.state as DateTimeType
-    val sunset = Sunset_Time.state as DateTimeType
-    val nowTime = DateTime()
-    logInfo("AlbaTramonto", "Tipo di nowTime: " + nowTime.getClass())
-    logInfo("AlbaTramonto", "Tipo di sunset: " + sunset.getClass())
-    logInfo("AlbaTramonto", "Orario Alba: sunrise " + sunrise)
-    logInfo("AlbaTramonto", "Orario Tramonto: sunset " + sunset)
-    logInfo("AlbaTramonto", "Orario nowTime: " + nowTime)
 
 
-    // Conversione a OffsetDateTime (gestendo il formato)
-    //Questa è la chiave. Prendiamo la stringa da sunrise.toString(), ne prendiamo i primi 19 caratteri (fino ai secondi),
-    // e aggiungiamo "Z" alla fine. "Z" indica UTC (Zulu time), che è un formato valido per OffsetDateTime.parse(). 
 
-    val sunriseString = sunrise.toString.substring(0, 17) + "Z" // Aggiunge "Z" per UTC
-    val sunsetString = sunset.toString.substring(0, 17) + "Z" // Aggiunge "Z" per UTC
-    logInfo("AlbaTramonto", "Orario Alba: sunriseString " + sunriseString)
-    logInfo("AlbaTramonto", "Orario Tramonto: sunsetString " + sunsetString)
-    //var offsetSunrise = OffsetDateTime.parse(sunriseString)
-    //var offsetSunset = OffsetDateTime.parse(sunsetString)
-
-    // Aggiunta dell'offset
-    //offsetSunrise = offsetSunrise.plus(Duration.ofHours(1)) // +1 ora dopo l'alba (SPEGNIMENTO)
-    //offsetSunset = offsetSunset.minus(Duration.ofMinutes(30)) // +1 ora prima del tramonto (ACCENSIONE)
- 
-    // Utilizziamo OffsetDateTime.now() per ottenere l'ora corrente con offset,
-    // in modo da avere un confronto coerente con gli altri OffsetDateTime.
-    logInfo("AlbaTramonto", "Il valore di nowTime è " + nowTime)
-    val nowTimeString = nowTime.toString.substring(0, 17) + "Z" // Aggiunge "Z" per UTC
-    logInfo("AlbaTramonto", "Il valore di nowTimeString è " + nowTimeString)
-
-    val isNighttime = nowTimeString.isBefore(sunrise) || nowOffset.isAfter(sunset) // true se è notte
-    
-    //logInfo("AlbaTramonto", "Il valore di nowOffset è " + nowOffset)
-    //logInfo("AlbaTramonto", "Il valore di isNighttime è " + isNighttime)
-    //logInfo("AlbaTramonto", "Il valore di sunrise è " + sunrise)
-    //logInfo("AlbaTramonto", "Il valore di sunset è " + sunset)
-
-    if (isNighttime) {
-        if (FGS222_004_SwitchBinary1.state != ON) {
-            FGS222_004_SwitchBinary1.sendCommand(ON)
-            logInfo("AlbaTramonto", "Luce accesa (1 ora prima del tramonto).")
-        }
-    } else {
-        if (FGS222_004_SwitchBinary1.state != OFF) {
-            FGS222_004_SwitchBinary1.sendCommand(OFF)
-            logInfo("AlbaTramonto", "Luce spenta (1 ora dopo l'alba).")
-        }
+rule "Esegui azioni in base a SunElevation"
+when
+Item SunElevation changed
+then
+    if(SunElevation.state < 0 && FGS222_004_SwitchBinary1.state == OFF) { // Accensione luce esterna se l'elevazione del sole è minore di 0 gradi
+        logInfo("Rule Astro", "Condizione SunElevation < 0, accendo luce esterna")
+        FGS222_004_SwitchBinary1.sendCommand(ON)
+       }// vLuceEsterna = 1
+      // else {
+      //  logInfo("Rule Astro", "Luce portone non accesa perchè lo switch è " + FGS222_004_SwitchBinary1.state.toString() + " e l'elevazione è " + SunElevation.state.toString()) 
+      // }
+    if(SunElevation.state < -10 && SunElevation.state > -12 && vTapparellastatus == 0) { // Chiusura tapparelle se l'elevazione del sole è minore di -10 gradi
+        logInfo("Rule Astro", "Condizione SunElevation > -3, chiusura tapparelle")
+        TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
+        TapparellaStudio.sendCommand(92)
+        TapparellaSoggiorno.sendCommand(97)
+        TapparellaCameretta.sendCommand(97)
+        vTapparellastatus = 1
     }
-    // Parte aggiunta per lo spegnimento preciso un'ora dopo l'alba
-    if (nowOffset.isBefore(sunrise) && sunrise.isBefore(nowOffset.plusHours(1))) {
-        logInfo("AlbaTramonto", "Condizione partenza Timer1.")
-        // Programma un timer per spegnere la luce esattamente a offsetSunrise
-        Timer1 = createTimer(now.plusMinutes(60), [|
-            if (FGS222_004_SwitchBinary1.state != OFF) {
-                FGS222_004_SwitchBinary1.sendCommand(OFF)
-                logInfo("AlbaTramonto", "Luce spenta (esattamente un'ora dopo l'alba).")
-            }
-        ])
+    if(SunElevation.state < -12 && vTapparellastatus == 1) {
+        logInfo("Rule Astro", "Condizione SunElevation < -11, reset variabile stato tapparelle")
+        vTapparellastatus = 0
     }
-end */
-
-
+    if(SunElevation.state > 0 && FGS222_004_SwitchBinary1.state == ON) { // Spegnimento luce esterna se l'elevazione del sole è maggiore di 0 gradi
+        logInfo("Rule Astro", "Condizione SunElevation > 0, spengo luce esterna")
+        FGS222_004_SwitchBinary1.sendCommand(OFF)
+      //  vLuceEsterna = 0
+    }
+    if(SunElevation.state >= 10 && SunElevation.state <= 15 && Prodino0_optoIn0.state == "DISINSERITO" && vTapparellastatus == 0){ //apertura tapparelle soggiorno e studio se l'elevazione del sole è tra 10 e 15 gradi e il prodino è disinserito
+        TapparellaSoggiorno.sendCommand(UP)
+        TapparellaStudio.sendCommand(UP)
+        vTapparellastatus = 1
+    }
+    if(SunElevation.state > 15 && vTapparellastatus == 1){ //reset variabile stato tapparelle
+        vTapparellastatus = 0
+    }
+end
 
 rule "Accensione Luce Garage"
 when
@@ -176,7 +119,15 @@ then
     if (SunElevation.state < 3) {
         if (FGS222_006_SwitchBinary2.state != ON) {
             FGS222_006_SwitchBinary2.sendCommand(ON)
-            logInfo("AlbaTramonto", "Accesa luce garage perchè l'elevazione del sole è minore di 3")
+            logInfo("Rule Astro", "Accesa luce garage perchè l'elevazione del sole è minore di 3")
         }
     }
+end
+
+rule "Chiusura tenda 60 minuti prima del tramonto"
+when
+    Channel 'astro:sun:local_offset60:set#event' triggered START
+then
+    logInfo("Rule Astro", "Tenda chiusa 60 minuti prima del tramonto")
+    FGR223_014_BlindsControl.sendCommand(UP)
 end

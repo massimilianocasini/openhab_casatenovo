@@ -3,22 +3,14 @@ Number  Prodino0_optoIn0 "Stato Antifurto [%s]" <alarm>         (gAlarmSystem)  
 Number  Prodino0_optoIn1 "Allarme [%s]"         <alarm>         (gAlarmSystem)              ["Status"]               {channel="mqtt:topic:cm4home:prodino:ingresso2", stateDescription="" [options="1=ALLARME, 0=RIPOSO"]}
 Number  Prodino0_optoIn2 "Stato 220V [%s]" 	                    (gAlarmSystem)              ["Status"]              {channel="mqtt:topic:cm4home:prodino:ingresso3", stateDescription="" [options="1=MANCANZA, 0=PRESENTE"]}
 Number  Prodino0_optoIn3 "Anomalia [%s]"  	                    (gAlarmSystem)      ["Status"]              {channel="mqtt:topic:cm4home:prodino:ingresso4", stateDescription="" [options="1=PRESENTE, 0=NESSUNA"]}
-//Number prodino0_out1 "Key gAntifurto"    <switch>  {mqtt=">[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:ON:rel-0-1], >[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:OFF:rel-0-0], <[myUnsecureBroker:/KMP/ProDinoWiFi/nInfo:state:MAP(prodino.map):optoIn-0.*]"}
 Switch  Prodino0_ReleOut1  "Chiave"              <switch>       (gAlarmSystem, gMapDb, gHouseAlarm) ["Switch"] {ga="securitySystemArmed", channel="mqtt:topic:cm4home:prodino:output1", expire="1s,command=OFF"}
-//Switch prodino0_out2 "Out 2"           (gAll, gAntifurto)      {mqtt=">[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:ON:rel-1-1], >[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:OFF:rel-1-0]"}
-//Switch prodino0_out3 "Out 3"           (gAll, gAntifurto)     {mqtt=">[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:ON:rel-2-1], >[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:OFF:rel-2-0]"}
-//Switch prodino0_out4 "Out 4"           (gAll, gAntifurto)     {mqtt=">[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:ON:rel-3-1], >[myUnsecureBroker:/KMP/ProDinoWiFi/Cmd:command:OFF:rel-3-0]"}
-//Number Prodino_temp "Antifurto Temperatura [%.1f °C]"  <temperature> (gAll, gTemperatura, gAntifurto, gInfluxdb) {channel="mqtt:topic:myUnsecureBroker:prodino:temp_prodino"}
-//Number Proxy_prodino_temp "Antifurto Temperatura [%.1f °C]"  <temperature> (gAll, gAntifurto, gInfluxdb) 
-//Number Prodino_umid "Antifurto Umidità [%.1f %%]"     <humidity> (gAll, gAntifurto, gInfluxdb)  {channel="mqtt:topic:myUnsecureBroker:prodino:umid_prodino"}
-//StudioLuce 
-//Switch  StudioLuce  "Luce Studio"   <light> (gAll, gStudio) {ga="Light" [roomHint="Studio"]}
+Switch  Prodino_LWT "Stato Prodino [%s]"                        (gAlarmSystem, gMQTT)                      ["Status"]  {channel="mqtt:topic:cm4home:prodino:prodino_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
 
 //Cm3Panel 
 String  Cm3panel    "CM3Panel"  <settings>  {channel="mqtt:topic:cm4home:cm3panel:system"}
 
 // Tasmota Garage
-Number ContatoreAcqua "Contatore acqua [%.0f]" (gTasmota, gInfluxdb) ["Measurement", "Water"] {channel="mqtt:topic:cm4home:flussometro:flusso"}
-Switch ResetContatoreAcqua "Reset contatore acqua []" (gTasmota) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:resetFlusso", expire="1s,command=OFF"}
+Number ContatoreAcqua "Contatore acqua [%.0f]" (gValve, gInfluxdb) ["Measurement", "Water"] {channel="mqtt:topic:cm4home:flussometro:flusso"}
+Switch ResetContatoreAcqua "Reset contatore acqua []" (gValve) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:resetFlusso", expire="1s,command=OFF"}
 Switch ElettrovalvolaAcqua "Elettrovalvola acqua []" (gValve) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:elettrovalvola", stateDescription="" [options="OFF=APERTA, ON=CHIUSA"]}
-String LWT "Stato Flussometro [%s]" (gTasmota) ["Status", "Water"] {channel="mqtt:topic:cm4home:flussometro:lwt", stateDescription="" [options="Online=ONLINE, Offline=OFFLINE"]}
+Switch LWT "Stato Flussometro [%s]" (gValve, gMQTT) ["Status", "Water"] {channel="mqtt:topic:cm4home:flussometro:tasmota_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}

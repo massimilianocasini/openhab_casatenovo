@@ -7,12 +7,12 @@ Number FGS221_002_SwitchBinary2_N "Item virtuale stato caldaia" (gInfluxdb)
 
 
 //FGD211 Universal Dimmer 500W, Corridoio
-Dimmer FGD211_003_SwitchDimmer "Luce Corridoio [%d %%]" <light> (gCorridorLight) ["Control", "Light"] {ga="Light" [roomHint="Corridoio"], channel="zwave:device:1f2db33fb0:node3:switch_dimmer"}
+Dimmer FGD211_003_SwitchDimmer "Luce Corridoio [%d %%]" <light> (gCorridorLight) ["Control", "Light"] {ga="Light" [roomHint="Corridoio"], channel="zwave:device:1f2db33fb0:node3:switch_dimmer", alexa="PowerState,Brightness"}
 
 //FGS222 Double relay Switch 2x1.5kW, Portone
 Switch FGS222_004_SwitchBinary "Binary"  {channel="zwave:device:1f2db33fb0:node4:switch_binary"}
-Switch FGS222_004_SwitchBinary1 "Luce Portone" <light> (gPortoneLight) ["Switch", "Light"]  { ga="Light" [roomHint="Portone"], channel="zwave:device:1f2db33fb0:node4:switch_binary1"}
-Switch FGS222_004_SwitchBinary2 "Apriporta portone e cancelletto" <door> (gPortoneLock) ["Switch"]  {channel="zwave:device:1f2db33fb0:node4:switch_binary2"}
+Switch FGS222_004_SwitchBinary1 "Luce Portone" <light> (gPortoneLight) ["Switch", "Light"]  { ga="Light" [roomHint="Portone"], channel="zwave:device:1f2db33fb0:node4:switch_binary1", alexa="Light"}
+Switch FGS222_004_SwitchBinary2 "Apriporta portone e cancelletto" <door> (gPortoneLock) ["Switch"]  {channel="zwave:device:1f2db33fb0:node4:switch_binary2", alexa="Switch"}
 
 //FGS222 Double relay Switch 2x1.5kW, Garage
 Switch FGS222_006_SwitchBinary "" {channel="zwave:device:1f2db33fb0:node6:switch_binary"}
@@ -29,10 +29,10 @@ Switch  FGBS001_007_AlarmGeneral2 "Alarm2" {channel="zwave:device:1f2db33fb0:nod
 Number:Temperature  FGBS001_007_SensorTemperature3_DS1820  "Temperatura Universal Bynary Garage[%.1f °C]" <temperature> (gFibaro3, gInfluxdb) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node7:sensor_temperature3"} 
 
 //FGMS001 Motion Sensor, Corridoio
-Number:Temperature FGMS001_008_Temp "Temperatura Occhio[%.1f °C]" <temperature> (gLivingroomTemp, gAvgTemperatura) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node8:sensor_temperature"}
-Number:Illuminance FGMS001_008_Lum "Luminosità Occhio [%.1f Lx]" <rgb> (gLivingroomTemp) ["Measurement", "Light"] {channel="zwave:device:1f2db33fb0:node8:sensor_luminance"}
-Switch FGMS001_008_All "IR Occhio [MAP(ir.map):%s]" <motion> (gLivingroomMotion) ["Status"] {channel="zwave:device:1f2db33fb0:node8:alarm_motion"}
-Number FGMS001_008_Batt "Livello batteria Motion Occhio [%s %%]" <battery> (gLivingroomTemp, gBattery) ["Status", "Energy"] {channel="zwave:device:1f2db33fb0:node8:battery-level"}
+Number:Temperature FGMS001_008_Temp "Temperatura Occhio[%.1f °C]" <temperature> (gLivingroomMotion, gAvgTemperatura) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node8:sensor_temperature"}
+Number:Illuminance FGMS001_008_Lum "Luminosità Occhio [%.1f Lx]" <rgb> (gLivingroomMotion) ["Measurement", "Light"] {channel="zwave:device:1f2db33fb0:node8:sensor_luminance"}
+Switch FGMS001_008_All "IR Occhio" <motion> (gLivingroomMotion) ["Status"] {channel="zwave:device:1f2db33fb0:node8:alarm_motion", stateDescription="" [options="OFF=NOMotion, ON=Motion"]}
+Number FGMS001_008_Batt "Livello batteria Motion Occhio [%s %%]" <battery> (gLivingroomMotion, gBattery) ["Status", "Energy"] {channel="zwave:device:1f2db33fb0:node8:battery-level"}
 
 // // //FGWP102 Metered Wall Plug Switch
 // Number:Energy FGWP102_009_MeterKwh "Energia consumata presa Fibaro[%.1f KWh]" <energy> (gKitchenSensor, gInfluxdb) ["Measurement", "Energy"] {channel="zwave:device:1f2db33fb0:node9:meter_kwh"}
@@ -54,17 +54,17 @@ Switch FGS221_011_SwitchBinary2 "Lumetti Caneretta " {channel="zwave:device:1f2d
 
 //FGBS001 Universal Binary Sensor, Cameretta
 Number FGBS001_012_SceneNumber ""  {channel="zwave:device:1f2db33fb0:node12:scene_number"}
-Switch FGBS001_012_SensorBinary1 "IR Cameretta [MAP(ir.map):%s]" <motion> (gBedroom2MotionDetector) ["Alarm", "Presence"] {channel="zwave:device:1f2db33fb0:node12:sensor_binary1"}
+Switch FGBS001_012_SensorBinary1 "IR Cameretta" <motion> (gBedroom2MotionDetector) ["Alarm", "Presence"] {channel="zwave:device:1f2db33fb0:node12:sensor_binary1", stateDescription="" [options="OFF=NOMotion, ON=Motion"]}
 Switch FGBS001_012_AlarmGeneral1 "" {channel="zwave:device:1f2db33fb0:node12:alarm_general1"}
-Switch FGBS001_012_SensorBinary2 "Tamper [MAP(tamper.map):%s]" <shield> ["Tampered"] {channel="zwave:device:1f2db33fb0:node12:sensor_binary2"}
+Switch FGBS001_012_SensorBinary2 "Tamper " <shield> {channel="zwave:device:1f2db33fb0:node12:sensor_binary2", stateDescription="" [options="OFF=Tamper, ON=OK"]}
 Switch FGBS001_012_AlarmGeneral2 "" {channel="zwave:device:1f2db33fb0:node12:alarm_general2"}
 Number:Temperature SensorTemperature3_DS1820 "Temperatura Cameretta [%.1f °C]" <temperature> {channel="zwave:device:1f2db33fb0:node12:sensor_temperature3"}
 Number:Temperature OffSetTemperature3_DS1820 "Temperatura Cameretta [%.1f °C]" <temperature> 
 
 //FGBS222 Smart Implant, IR Corridoio
 Number FGBS222_013_SensorTemperature "IR Temperatura corridoio [%.1f °C]" <temperature> {channel="zwave:device:1f2db33fb0:node13:sensor_temperature"}
-Switch FGBS222_013_Input1 "IR Tamper [MAP(tamper.map):%s]" <shield> {channel="zwave:device:1f2db33fb0:node13:alarm_burglar1"}
-Switch FGBS222_013_Input2 "IR Corridoio [MAP(ir.map):%s]" <motion> (gCorridorMotionDetector) ["Status"] {channel="zwave:device:1f2db33fb0:node13:alarm_burglar2"}
+Switch FGBS222_013_Input1 "IR Tamper" <shield> {channel="zwave:device:1f2db33fb0:node13:alarm_burglar1", stateDescription="" [options="OFF=Tamper, ON=OK"]}
+Switch FGBS222_013_Input2 "IR Corridoio" <motion> (gCorridorMotionDetector) ["Status"] {channel="zwave:device:1f2db33fb0:node13:alarm_burglar2", stateDescription="" [options="OFF=NOMotion, ON=Motion"]}
 
 //FGR223 Roller Shutter, Pergotenda
 Rollershutter FGR223_014_BlindsControl "Pergotenda [%d %%]" <rollershutter> (gGardenBlind) ["OpenState"] {channel="zwave:device:1f2db33fb0:node14:blinds_control1"}
@@ -82,7 +82,6 @@ Number:Power WPS104_015_MeterWatts "Potenza richiesta scaldabagno [%.0f W]" <fan
 Number:Energy WPS104_015_MeterKwh "Energia consumata [%.1f kWh]" <fan> (gQuadroElettrico,gInfluxdb) ["Measurement", "Energy"] {channel="zwave:device:1f2db33fb0:node15:meter_kwh"}
 String WPS104_015_tensione_potenza "Temp Aussen [%s]"
 Switch  WPS104_015_ResetMeter "Reset contatori" (gQuadroElettrico) {channel="zwave:device:1f2db33fb0:node15:meter_reset"}
-
 
 //FGS221 Double Relay Switch 2x1.5kW, Soggiorno
 Switch FGS221_016_SwitchBinary ""  {channel="zwave:device:1f2db33fb0:node16:switch_binary"}

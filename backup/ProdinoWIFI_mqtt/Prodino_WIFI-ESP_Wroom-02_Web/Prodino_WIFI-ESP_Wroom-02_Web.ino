@@ -1,12 +1,8 @@
 // =============================================================
-//Codice per scheda PRODINo WIFI-ESP WROOM-02
-// https://kmpelectronics.eu/tutorials-examples/prodino-wifi-tutorial/
-// Autore chatGPT da idea di Andrea Montefusco (RIP), 20250820
-// =============================================================
 // ProDino WiFi-ESP WROOM-02
 // Interfaccia WEB sempre disponibile + Config WiFi/MQTT persistente
 // Fallback AP aperto se lo STA non si connette
-// MQTT: pubblicazione ingressi, controllo relè, LWT
+// MQTT: pubblicazione ingressi, controllo relè, LWT, refresh periodico
 // -------------------------------------------------------------
 // Dipendenze:
 //  - ESP8266 core
@@ -21,8 +17,9 @@
 //      <base>/relay/<n>/set | ON/OFF/1/0
 //      <base>/relay/<n>/state
 //      <base>/input/<n>/state
-//      <base>/status (online/offline)
+//      <base>/status (online/offline) - LWT
 //  - N relè/opto definiti per ProDino (4 + 4)
+//  - Refresh automatico ogni minuto di tutti gli stati
 // =============================================================
 
 #include <KMPCommon.h>
@@ -41,6 +38,7 @@
 #define CFG_MAGIC 0x5A5AD1A5  // magic per validazione
 #define NUM_INPUTS 4
 #define NUM_RELAYS 4
+#define REFRESH_INTERVAL 60000  // 60 secondi in millisecondi
 
 ESP8266WebServer server(80);
 WiFiClient espClient;
@@ -62,6 +60,9 @@ struct Config {
 // Stato attuale
 bool relayState[NUM_RELAYS] = {false, false, false, false};
 bool inputState[NUM_INPUTS] = {false, false, false, false};
+
+// Timer per refresh periodico
+unsigned long lastRefresh = 0;
 
 // =======================
 // Gestione Config
@@ -107,6 +108,31 @@ void publishRelayState(int r, bool state) {
   mqttClient.publish(topic.c_str(), state ? "ON" : "OFF", true);
 }
 
+void publishOnlineStatus() {
+  String statusTopic = String(cfg.mtopic) + "/status";
+  mqttClient.publish(statusTopic.c_str(), "online", true);
+  Serial.println("DEBUG: Pubblicato stato online");
+}
+
+void publishAllStates() {
+  Serial.println("DEBUG: Refresh periodico - pubblicazione di tutti gli stati...");
+  
+  // Pubblica stati relè
+  for (int r=0; r<NUM_RELAYS; r++) {
+    publishRelayState(r, relayState[r]);
+  }
+  
+  // Pubblica stati ingressi
+  for (int i=0; i<NUM_INPUTS; i++) {
+    publishInputState(i, inputState[i]);
+  }
+  
+  // Pubblica stato online
+  publishOnlineStatus();
+  
+  Serial.println("DEBUG: Refresh periodico completato");
+}
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   String t = topic;
   String msg;
@@ -130,17 +156,91 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
+// Funzione di riconnessione MQTT migliorata con log dettagliato e LWT
 void reconnectMQTT() {
   if (cfg.mserver[0] == 0) return;
-  if (!mqttClient.connected()) {
-    if (mqttClient.connect("ProDinoESP", cfg.muser, cfg.mpass)) {
+  
+  while (!mqttClient.connected()) {
+    Serial.print("DEBUG: Tentativo connessione MQTT...");
+    Serial.print(" Server: ");
+    Serial.print(cfg.mserver);
+    Serial.print(" Porta: ");
+    Serial.println(cfg.mport);
+
+    // Genera un clientID casuale
+    String clientId = "ProDinoESP-";
+    clientId += String(random(0xffff), HEX);
+
+    Serial.print("DEBUG: Client ID: ");
+    Serial.println(clientId);
+
+    // Prepara LWT (Last Will Testament)
+    String statusTopic = String(cfg.mtopic) + "/status";
+    
+    // Tentativo di connessione con credenziali e LWT
+    if (mqttClient.connect(clientId.c_str(), cfg.muser, cfg.mpass, 
+                          statusTopic.c_str(), 1, true, "offline")) {
+      Serial.println("DEBUG: MQTT connesso con successo");
+      
+      // Pubblica immediatamente stato online
+      publishOnlineStatus();
+      
+      // Sottoscrizione ai topic dei relè
       for (int r=0; r<NUM_RELAYS; r++) {
         String setTopic = String(cfg.mtopic) + "/relay/" + String(r+1) + "/set";
+        Serial.print("DEBUG: Sottoscrizione al topic: ");
+        Serial.println(setTopic);
         mqttClient.subscribe(setTopic.c_str());
       }
+      
       // Pubblica stati iniziali
-      for (int r=0; r<NUM_RELAYS; r++) publishRelayState(r, relayState[r]);
-      for (int i=0; i<NUM_INPUTS; i++) publishInputState(i, inputState[i]);
+      Serial.println("DEBUG: Pubblicazione stati iniziali...");
+      publishAllStates();
+      
+      Serial.println("DEBUG: Inizializzazione MQTT completata");
+      break; // Esci dal loop mentre se connesso
+      
+    } else {
+      Serial.print("DEBUG: Connessione MQTT fallita, codice errore: ");
+      Serial.print(mqttClient.state());
+      Serial.println(" - Significato:");
+      
+      // Log dettagliato degli errori
+      switch(mqttClient.state()) {
+        case -4:
+          Serial.println("DEBUG: MQTT_CONNECTION_TIMEOUT - server non risponde");
+          break;
+        case -3:
+          Serial.println("DEBUG: MQTT_CONNECTION_LOST - connessione persa");
+          break;
+        case -2:
+          Serial.println("DEBUG: MQTT_CONNECT_FAILED - connessione fallita");
+          break;
+        case -1:
+          Serial.println("DEBUG: MQTT_DISCONNECTED - client disconnesso");
+          break;
+        case 1:
+          Serial.println("DEBUG: MQTT_CONNECT_BAD_PROTOCOL - versione protocollo errata");
+          break;
+        case 2:
+          Serial.println("DEBUG: MQTT_CONNECT_BAD_CLIENT_ID - client ID rifiutato");
+          break;
+        case 3:
+          Serial.println("DEBUG: MQTT_CONNECT_UNAVAILABLE - server non disponibile");
+          break;
+        case 4:
+          Serial.println("DEBUG: MQTT_CONNECT_BAD_CREDENTIALS - credenziali errate");
+          break;
+        case 5:
+          Serial.println("DEBUG: MQTT_CONNECT_UNAUTHORIZED - client non autorizzato");
+          break;
+        default:
+          Serial.println("DEBUG: Errore sconosciuto");
+          break;
+      }
+      
+      Serial.println("DEBUG: Nuovo tentativo tra 5 secondi...");
+      delay(5000);
     }
   }
 }
@@ -162,7 +262,9 @@ void handleConfigPage() { // Pagina di setup
                 "Topic base: <input type='text' name='mtopic' value='" + String(cfg.mtopic) + "'><br>"
                 "<input type='submit' value='Salva'>"
                 "</form>"
-                "<p><a href='/control'>Vai al controllo I/O</a></p>";
+                "<p><a href='/control'>Vai al controllo I/O</a></p>"
+                "<p><small>Refresh automatico MQTT ogni 60 secondi</small></p>"
+                "<p><small>LWT Topic: " + String(cfg.mtopic) + "/status</small></p>";
   server.send(200, "text/html", html);
 }
 
@@ -193,6 +295,7 @@ void handleControlPage() {
     td { padding: 8px; border: 1px solid #ccc; }
     .on { color: green; font-weight: bold; }
     .off { color: red; font-weight: bold; }
+    .info { font-size: 0.8em; color: #666; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -246,6 +349,11 @@ void handleControlPage() {
   <div class="menu">
     <a href="/">🏠 Home</a>
   </div>
+  
+  <div class="info">
+    <p>MQTT Refresh automatico ogni 60 secondi</p>
+    <p>LWT: Topic di sopravvivenza attivo</p>
+  </div>
 
 </body>
 </html>
@@ -253,7 +361,6 @@ void handleControlPage() {
 
   server.send(200, "text/html", html);
 }
-
 
 void handleRelayCmd() {
   int r = server.arg("ch").toInt();
@@ -294,9 +401,10 @@ void handleStatusJson() {
 void setupWebServer() {
   server.on("/", handleConfigPage);
   server.on("/control", handleControlPage);
+  server.on("/save", handleSave);
   server.on("/status.json", handleStatusJson);
 
-  // ✅ endpoint per comando relè da web
+  // endpoint per comando relè da web
   server.on("/relay", HTTP_GET, []() {
     if (server.hasArg("ch") && server.hasArg("set")) {
       int r = server.arg("ch").toInt();
@@ -320,8 +428,6 @@ void setupWebServer() {
   server.begin();
   Serial.println("Web server avviato");
 }
-
-
 
 // =======================
 // Setup
@@ -364,6 +470,9 @@ void setup() {
   for (int i=0; i<NUM_INPUTS; i++) {
     inputState[i] = DinoWiFi.GetOptoInState(i);
   }
+
+  // Inizializza timer refresh
+  lastRefresh = millis();
 }
 
 // =======================
@@ -372,9 +481,19 @@ void setup() {
 void loop() {
   server.handleClient();
 
+  // Controllo connessione MQTT con log di debug
   if (WiFi.status() == WL_CONNECTED) {
-    if (!mqttClient.connected()) reconnectMQTT();
+    if (!mqttClient.connected()) {
+      Serial.println("DEBUG: Connessione MQTT persa, tentativo di riconnessione...");
+      reconnectMQTT();
+    }
     mqttClient.loop();
+    
+    // Refresh periodico ogni minuto
+    if (millis() - lastRefresh >= REFRESH_INTERVAL) {
+      publishAllStates();
+      lastRefresh = millis();
+    }
   }
 
   // Monitoraggio ingressi

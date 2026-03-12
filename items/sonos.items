@@ -1,25 +1,59 @@
-Dimmer SonosBeam_Volume                  "Volume [%.1f %%]" <soundvolume>      (gSonos) {channel="sonos:Beam:RINCON_542A1BD8C3C601400:volume"}
-String SonosBeam_NotificationSound       "Volume [%.1f %%]" <soundvolume>      (gSonos) {channel="sonos:Beam:RINCON_542A1BD8C3C601400:notificationsound"}
+Dimmer SonosBeam_Volume             "Volume Soggiorno [%.1f %%]" <soundvolume>  (gLivingSpeaker) ["SoundVolume", "Control"]  {channel="sonos:Beam:RINCON_542A1BD8C3C601400:volume"}
+String SonosBeam_NotificationSound  "Volume Soggiorno [%.1f %%]"      <soundvolume>  (gLivingSpeaker)                             {channel="sonos:Beam:RINCON_542A1BD8C3C601400:notificationsound"}
+Player SonosBeam_Control         "Control Soggiorno"            <switch>       (gLivingSpeaker) ["Mode", "Status"]                  {channel="sonos:Beam:RINCON_542A1BD8C3C601400:control"}
+Switch SonosBeam_Mute         "Mute Soggiorno"             <soundvolume_mute> (gLivingSpeaker) ["Status"] {channel="sonos:Beam:RINCON_542A1BD8C3C601400:mute"}
+String SonosBeam_CurrentTitle "Now playing Soggiorno [%s]" <text>             (gLivingSpeaker)["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:currenttitle"}
+String SonosBeam_State        "Status Soggiorno [%s]"      <text>             (gLivingSpeaker) ["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:state"}
+String SonosBeam_PlayUri      "Playing URI Soggiorno [%s]" <text>             (gLivingSpeaker)["Status"] {channel="sonos:Beam:RINCON_542A1BD8C3C601400:playuri"}
+Image  SonosBeam_CurrentAlbumArt "Copertina Soggiorno" (gLivingSpeaker) ["Status"] {channel="sonos:Beam:RINCON_542A1BD8C3C601400:currentalbumart"}
+String SonosBeam_CurrentAlbum  "Album Soggiorno [%s]" <text>             (gLivingSpeaker)["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:currentalbum"}
+String SonosBeam_CurrentArtist "Artista Soggiorno [%s]" <text>             (gLivingSpeaker)["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:currentartist"}
+String SonosBeam_Add "Aggiungi a gruppo Soggiorno" <text>             (gLivingSpeaker)["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:add"}
+String SonosBeam_Remove "Rimuovi da gruppo Soggiorno" <text>             (gLivingSpeaker)["Status"]{channel="sonos:Beam:RINCON_542A1BD8C3C601400:remove"}
+Switch SonosBeam_Standalone         "Rendi indipendente Soggiorno"             (gLivingSpeaker) ["Status"] {channel="sonos:Beam:RINCON_542A1BD8C3C601400:standalone"}
+String SonosBeam_Coordinator         "UDN coordinator Soggiorno"              (gLivingSpeaker) ["Status"] {channel="sonos:Beam:RINCON_542A1BD8C3C601400:coordinator"}
+String SonosBeam_CurrentTrack "Current track Soggiorno" <text> (gLivingSpeaker) ["Status"]   {channel="sonos:Beam:RINCON_542A1BD8C3C601400:currenttrack"}
+String SonosBeam_ZoneGroupId         "Zone Group Soggiorno"  (gLivingSpeaker)  {channel="sonos:Beam:RINCON_542A1BD8C3C601400:zonegroupid"}
 
-Dimmer SonosEraStudio_Volume                  "Volume [%.1f %%]" <soundvolume>      (gSonos,gOfficeSpeaker)["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:volume"}
-String SonosEraStudio_NotificationSound       "Volume [%.1f %%]" <soundvolume>      (gSonos, gOfficeSpeaker) {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:notificationsound"} 
-Player SonosEraStudio_Controller   "Controller"                          (gSonos, gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:control"}
-Switch SonosEraStudio_Mute         "Mute"             <soundvolume_mute> (gSonos, gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:mute"}
-Switch SonosEraStudio_LED          "LED"              <switch>           (gSonos, gOfficeSpeaker)["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:led"}
-String SonosEraStudio_CurrentTitle "Now playing [%s]" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currenttitle"}
-String SonosEraStudio_State        "Status [%s]"      <text>             (gSonos, gOfficeSpeaker) ["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:state"}
-String SonosEraStudio_PlayUri      "Playing URI [%s]" <text>             (gSonos, gOfficeSpeaker)["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:playuri"}
+
+Dimmer SonosEraStudio_Volume            "Volume Studio[%.1f %%]" <soundvolume>         (gOfficeSpeaker) ["Control", "SoundVolume"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:volume"}
+String SonosEraStudio_NotificationSound "Volume [%.1f %%]" <soundvolume>                (gOfficeSpeaker) {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:notificationsound"} 
+Player SonosEraStudio_Control        "Control Studio"            <switch>                (gOfficeSpeaker) ["Mode", "Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:control"}
+Switch SonosEraStudio_Mute         "Mute Studio"             <soundvolume_mute> (gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:mute"}
+Switch SonosEraStudio_LED          "LED Studio"              <switch>           (gOfficeSpeaker)["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:led"}
+String SonosEraStudio_CurrentTitle "Now playing Studio [%s]" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currenttitle"}
+String SonosEraStudio_State        "Status Studio [%s]"      <text>             (gOfficeSpeaker) ["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:state"}
+String SonosEraStudio_PlayUri      "Playing URI Studio [%s]" <text>             (gOfficeSpeaker)["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:playuri"}
 Switch PlayWebRadioUri
-Image  SonosEraStudio_CurrentAlbumArt "Copertina" (gSonos, gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentalbumart"}
-String SonosEraStudio_CurrentAlbum  "Album [%s]" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentalbum"}
-String SonosEraStudio_CurrentArtist "Artista [%s]" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentartist"}
-String SonosEraStudio_Add "Aggiungi a gruppo" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:add"}
-String SonosEraStudio_Remove "Rimuovi da gruppo" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:remove"}
-Switch SonosEraStudio_Standalone         "Rendi indipendente"             (gSonos, gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:standalone"}
-Switch SonosEraStudio_Cordinator         "Rendi coordinator"              (gSonos, gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:coordinator"}
-String SonosEraStudio_TuneStationID "TuneStationID" <text>             (gSonos, gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:tuneinstationid"}
-String SonosEraStudio_Favorite "Preferito" <text> (gSonos, gOfficeSpeaker) ["Status"]   {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:favorite"}
-String SonosEraStudio_CurrentTrack "Preferito" <text> (gSonos, gOfficeSpeaker) ["Status"]   {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currenttrack"}
+Image  SonosEraStudio_CurrentAlbumArt "Copertina Studio" (gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentalbumart"}
+String SonosEraStudio_CurrentAlbum  "Album Studio [%s]" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentalbum"}
+String SonosEraStudio_CurrentArtist "Artista Studio [%s]" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currentartist"}
+String SonosEraStudio_Add "Aggiungi a gruppo Studio" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:add"}
+String SonosEraStudio_Remove "Rimuovi da gruppo Studio" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:remove"}
+Switch SonosEraStudio_Standalone         "Rendi indipendente Studio"             (gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:standalone"}
+String SonosEraStudio_Coordinator         "UDN coordinator Studio"              (gOfficeSpeaker) ["Status"] {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:coordinator"}
+String SonosEraStudio_TuneStationID "TuneStationID Studio" <text>             (gOfficeSpeaker)["Status"]{channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:tuneinstationid"}
+String SonosEraStudio_Favorite "Preferito Studio" <text> (gOfficeSpeaker) ["Status"]   {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:favorite"}
+String SonosEraStudio_CurrentTrack "Current track Studio" <text> (gOfficeSpeaker) ["Status"]   {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:currenttrack"}
+String SonosEraStudio_ZoneGroupId    "Zone Group Studio"     (gOfficeSpeaker)  {channel="sonos:Era100:RINCON_F0F6C1A32C0E01400:zonegroupid"}
 
-Dimmer SonosEraLetto_Volume                  "Volume [%.1f %%]" <soundvolume>      (gSonos) {channel="sonos:Era100:RINCON_C43875933BE401400:volume"}
-String SonosEraLetto_NotificationSound       "Volume [%.1f %%]" <soundvolume>      (gSonos) {channel="sonos:Era100:RINCON_C43875933BE401400:notificationsound"}  
+Dimmer SonosEraLetto_Volume             "Volume Letto[%.1f %%]"   <soundvolume> (gBedroom1Speaker)        ["Control", "SoundVolume"]      {channel="sonos:Era100:RINCON_C43875933BE401400:volume"}
+String SonosEraLetto_NotificationSound  "Volume Letto [%.1f %%]"          <soundvolume>  (gBedroom1Speaker)   {channel="sonos:Era100:RINCON_C43875933BE401400:notificationsound"}  
+Player SonosEraLetto_Control         "Control Letto"                <switch>       (gBedroom1Speaker)       ["Mode", "Status"]          {channel="sonos:Era100:RINCON_C43875933BE401400:control"}
+Switch SonosEraLetto_Mute         "Mute Letto"                 <soundvolume_mute> (gBedroom1Speaker)       ["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:mute"}
+Switch SonosEraLetto_LED          "LED Letto"                  <switch>           (gBedroom1Speaker)["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:led"}
+String SonosEraLetto_CurrentTitle "Now playing Letto [%s]" <text>             (gBedroom1Speaker)["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:currenttitle"}
+String SonosEraLetto_State        "Status Letto [%s]"      <text>             (gBedroom1Speaker) ["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:state"}
+String SonosEraLetto_PlayUri      "Playing URI Letto [%s]" <text>             (gBedroom1Speaker)["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:playuri"}
+Image  SonosEraLetto_CurrentAlbumArt "Copertina Letto" (gBedroom1Speaker) ["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:currentalbumart"}
+String SonosEraLetto_CurrentAlbum  "Album Letto [%s]" <text>             (gBedroom1Speaker)["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:currentalbum"}
+String SonosEraLetto_CurrentArtist "Artista Letto [%s]" <text>             (gBedroom1Speaker)["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:currentartist"}
+String SonosEraLetto_Add "Aggiungi a gruppo Letto" <text>             (gBedroom1Speaker)["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:add"}
+String SonosEraLetto_Remove "Rimuovi da gruppo Letto" <text>             (gBedroom1Speaker)["Status"]{channel="sonos:Era100:RINCON_C43875933BE401400:remove"}
+Switch SonosEraLetto_Standalone         "Rendi indipendente Letto"             (gBedroom1Speaker) ["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:standalone"}
+String SonosEraLetto_Coordinator         "UDN coordinator Letto"              (gBedroom1Speaker) ["Status"] {channel="sonos:Era100:RINCON_C43875933BE401400:coordinator"}
+String SonosEraLetto_CurrentTrack "Current track Letto" <text> (gBedroom1Speaker) ["Status"]   {channel="sonos:Era100:RINCON_C43875933BE401400:currenttrack"}
+String SonosEraLetto_ZoneGroupId     "Zone Group Letto"      (gBedroom1Speaker) {channel="sonos:Era100:RINCON_C43875933BE401400:zonegroupid"}
+
+//String Sonos_Group_Command "Comando Gruppo Sonos"
+String Sonos_Group_All_Trigger "Trigger Gruppo Tutti Sonos"

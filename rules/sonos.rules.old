@@ -1,0 +1,80 @@
+rule "Raggruppa Tutti Sonos Speaker nel gruppo"
+when
+    Item Sonos_Group_Command received command
+then
+    val command = receivedCommand.toString()
+    
+    // Ottieni gli UDN di tutti gli speaker
+    val studio_udn = SonosEraStudio_Coordinator.state.toString()
+    val letto_udn = SonosEraLetto_Coordinator.state.toString()
+    val beam_udn = SonosBeam_Coordinator.state.toString()
+    
+    switch(command) {
+        case "group_studio_all": {
+            logInfo("Sonos", "Raggruppamento con Studio come coordinatore")
+            SonosEraStudio_Add.sendCommand(letto_udn)
+            Thread::sleep(500)
+            SonosEraStudio_Add.sendCommand(beam_udn)
+        }
+        case "group_soggiorno_all": {
+            logInfo("Sonos", "Raggruppamento con Beam Soggiorno come coordinatore")
+            SonosBeam_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosBeam_Add.sendCommand(letto_udn)
+        }
+        case "group_letto_all": {
+            logInfo("Sonos", "Raggruppamento con Era Letto come coordinatore")
+            SonosEraLetto_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosEraLetto_Add.sendCommand(beam_udn)
+        }
+		case "ungroup_all": {
+    		logInfo("Sonos", "Scioglimento di tutti i gruppi")
+			SonosEraStudio_Standalone.sendCommand(ON)
+			Thread::sleep(500)
+			SonosEraLetto_Standalone.sendCommand(ON)
+			Thread::sleep(500)
+			SonosBeam_Standalone.sendCommand(ON)
+	}
+        default: {
+            logWarn("Sonos", "Comando non riconosciuto: " + command)
+        }
+    }
+    
+    logInfo("Sonos", "Raggruppamento completato con comando: " + command)
+end
+
+rule "Sonos Group All from Widget"
+when
+    Item Sonos_Group_All_Trigger received command
+then
+    val coordinator = receivedCommand.toString()
+    val studio_udn = SonosEraStudio_Coordinator.state.toString()
+    val letto_udn = SonosEraLetto_Coordinator.state.toString()
+    val beam_udn = SonosBeam_Coordinator.state.toString()
+    
+    logInfo("Sonos", "Raggruppamento tutti con coordinatore: " + coordinator)
+    
+    switch(coordinator) {
+        case studio_udn: {
+            SonosEraStudio_Add.sendCommand(letto_udn)
+            Thread::sleep(500)
+            SonosEraStudio_Add.sendCommand(beam_udn)
+        }
+        case beam_udn: {
+            SonosBeam_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosBeam_Add.sendCommand(letto_udn)
+        }
+        case letto_udn: {
+            SonosEraLetto_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosEraLetto_Add.sendCommand(beam_udn)
+        }
+        default: {
+            logWarn("Sonos", "Coordinatore non riconosciuto: " + coordinator)
+        }
+    }
+    
+    logInfo("Sonos", "Raggruppamento completato")
+end

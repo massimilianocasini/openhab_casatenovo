@@ -5,3 +5,5 @@ Number  SunElevation "Elevazione "  <sun> (gInfluxdb) {channel="astro:sun:local:
 Number:Intensity Total_Radiation    "Irraggiamento totale [%.2f %unit%]"  <sun> (gInfluxdb, gAstroRadation) { channel="astro:sun:local:radiation#total" }
 Number:Intensity Diffuse_Radiation  "Irraggiamento diffuso [%.2f %unit%]" <sun> (gInfluxdb, gAstroRadation)  { channel="astro:sun:local:radiation#diffuse" }
 Number:Intensity Direct_Radiation  "Irraggiamento diretto [%.2f %unit%]"  <sun> (gInfluxdb, gAstroRadation) { channel="astro:sun:local:radiation#direct" }
+Switch SunsetEvent "Evento tramonto" <sunset> {channel="astro:sun:local:set#event"}
+Switch SunriseEvent "Evento alba" <sunrise> {channel="astro:sun:local:rise#event"}

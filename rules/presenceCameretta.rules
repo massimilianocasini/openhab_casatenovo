@@ -1,20 +1,37 @@
 var Timer occupancyTimer = null
-val int timeoutMinutes = 120 // choose an appropriate value
+val int timeoutMinutes = 120
 
 rule "Spegni luce se non rilevi presenza"
 when
     Item FGBS001_012_SensorBinary1 received update ON or
     Item FGS221_010_SwitchBinary1 received update ON
 then
-    if(occupancyTimer === null) {
-        logInfo("PresenceCameretta", "Timer start")
-        occupancyTimer = createTimer(now.plusMinutes(timeoutMinutes ), [|
-            FGS221_010_SwitchBinary1.sendCommand(OFF)
-            occupancyTimer = null
-            logInfo("PresenceCameretta", "Timer concluso luce spenta")
-        ])
+    if (FGS221_010_SwitchBinary1.state == ON) {
+        
+        if (occupancyTimer === null) {  // <-- === con null
+            logInfo("PresenceCameretta", "Timer start")
+            occupancyTimer = createTimer(now.plusMinutes(timeoutMinutes), [|
+                if (FGS221_010_SwitchBinary1.state == ON) {
+                    FGS221_010_SwitchBinary1.sendCommand(OFF)
+                    logInfo("PresenceCameretta", "Timer concluso luce spenta")
+                }
+                occupancyTimer = null
+            ])
+        }
+        else {
+            logInfo("PresenceCameretta", "Timer reschedule")
+            occupancyTimer.reschedule(now.plusMinutes(timeoutMinutes))
+        }
     }
-    else {
-        occupancyTimer.reschedule(now.plusMinutes(timeoutMinutes ))
+end
+
+rule "Cancella timer se luce spenta manualmente"
+when
+    Item FGS221_010_SwitchBinary1 received update OFF
+then
+    if (occupancyTimer !== null) {  // <-- !== con null
+        occupancyTimer.cancel()
+        occupancyTimer = null
+        logInfo("PresenceCameretta", "Timer cancellato - luce spenta manualmente")
     }
 end

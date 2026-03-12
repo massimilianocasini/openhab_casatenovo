@@ -2,9 +2,9 @@
 //Seconds	Minutes	    Hours	Day Of Month	Month	Day Of Week	            Year
 //  0	        30	      1	        ?	          *	    MON,TUE,WED,THU,FRI	    *
 //var Timer myTimer = null
-rule "Presa Garage 1 accendi alle 8"
+/* rule "Presa Garage 1 accendi alle 14"
 when
-    Time cron "0 0 8 ? * * *" //Ogni giorno alle 8 del mattino accendi la presa
+    Time cron "0 0 14 ? * * *" //Ogni giorno alle 14 del mattino accendi la presa
 then
    Presa1GarageSwitch.sendCommand(ON)
 //    val telegramAction = getActions("telegram","telegram:telegramBot:Telegram_Bot")
@@ -28,9 +28,9 @@ then
     logInfo("Presa.rules", "Presa Garage 1 spenta alle 20")
    // val telegramAction = getActions("telegram","telegram:telegramBot:Telegram_Bot")
    //  telegramAction.sendTelegram("Presa Garage 1 spenta alle 20 del pomeriggio")
-end
+end */
 
-rule "Presa soggiorno1 ON"
+/* rule "Presa soggiorno1 ON Deodorante"
 when
     Time cron "0 0 14 ? * * *" //Ogni giorno alle 14 del mattino accendi la presa
 then
@@ -41,7 +41,7 @@ then
     else {
         logInfo("Presa.rules", "Presa soggiorno1 NON ON perchè Prodino0_optoIn0 è INSERITO")
     }
-end
+end */
 
 rule "Presa soggiorno1 OFF"
 when

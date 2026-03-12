@@ -1,0 +1,214 @@
+// ==============================================================================
+// SCD40 Matter Device - OpenHAB Items Configuration
+// ==============================================================================
+// Copia questo file in: /etc/openhab/items/scd40.items
+//
+// IMPORTANTE: Sostituisci i channel ID con quelli reali del tuo dispositivo Matter
+// Puoi trovarli in: Settings -> Things -> [Il tuo device] -> Channels
+// ==============================================================================
+
+Group gSCD40 "SCD40 Sensor" <temperature>
+// ------------------------------------------------------------------------------
+// Ingressi (Read-only)
+// ------------------------------------------------------------------------------
+
+Switch SCD401_In1 "Ingresso 1 Soggiorno" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:1#booleanstate-statevalue" }
+Switch SCD401_In2 "Ingresso 2 Soggiorno" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:2#booleanstate-statevalue" }
+Switch SCD401_In3 "Ingresso 3 Soggiorno" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:3#booleanstate-statevalue" }
+Switch SCD401_In4 "Ingresso 4 Soggiorno" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:4#booleanstate-statevalue" }
+
+// ------------------------------------------------------------------------------
+// Uscite (Momentary e Latching)
+// ------------------------------------------------------------------------------
+
+Switch SCD401_Out1 "Uscita 1 Soggiorno" <output> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:5#onoffcontrol-onoff" }
+Switch SCD401_Out2 "Uscita 2 Soggiorno" <output> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:6#onoffcontrol-onoff" }
+
+// ------------------------------------------------------------------------------
+// SENSORI (Read-only)
+// ------------------------------------------------------------------------------
+
+Number SCD401_AirQuality "Qualità Aria Soggiorno [MAP(airquality.map):%s]" <qualityofservice> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "AQI"]
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:7#airquality-airquality" }
+
+Number:Dimensionless SCD401_CO2 "CO2 Soggiorno [%.0f ppm]" <gas> (gSCD40, gLivingroomHVAC) 
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:8#airquality-airquality" } 
+
+Number:Temperature SCD401_Temperature "Temperatura Soggiorno [%.1f °C]" <temperature> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "Temperature"]
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:9#temperaturemeasurement-measuredvalue" }
+
+Number SCD401_Humidity "Umidità Soggiorno [%.1f %%]" <humidity> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "Humidity"] 
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:10#relativehumiditymeasurement-measuredvalue" }
+
+// ------------------------------------------------------------------------------_
+// CONTROLLI VIRTUALI - SWITCH (Momentary e Latching)
+// ------------------------------------------------------------------------------
+
+Switch SCD401_Calibrate "Calibra Soggiorno (400 ppm)" <settings> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:11#onoffcontrol-onoff" }
+
+Switch SCD401_ASC "Auto-Calibrazione Soggiorno ASC" <switch> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:12#onoffcontrol-onoff" }
+
+Switch SCD401_LowPower "Modalità Risparmio Energetico Soggiorno" <energy> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:13#onoffcontrol-onoff" }
+
+Switch SCD401_Persist "Salva Impostazioni Soggiorno" <save> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:14#onoffcontrol-onoff" }
+
+Switch SCD401_SelfTest "Autotest Sensore Soggiorno" <test> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:15#onoffcontrol-onoff" }
+
+// ------------------------------------------------------------------------------
+// CONTROLLI NUMERICI - Item RAW (nascosti dall'UI)
+// ------------------------------------------------------------------------------
+// Questi sono i dimmer Matter originali (0-254)
+// NON usarli direttamente - usa i proxy qui sotto
+
+Dimmer SCD401_Altitudine_Raw "Altitudine Raw Soggiorno [%d]" (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:16#levelcontrol-level" }
+
+Dimmer SCD401_TempOffset_Raw "Offset Temperatura Raw Soggiorno [%d]" (gSCD40)
+    { channel="matter:node:79ba0f3e8c:1177191750859777324:17#levelcontrol-level" }
+
+// ------------------------------------------------------------------------------
+// CONTROLLI NUMERICI - Item PROXY (da usare nelle UI)
+// ------------------------------------------------------------------------------
+// Questi item hanno valori intuitivi e gestiscono la conversione automatica
+
+Number:Length SCD401_Altitudine "Altitudine Soggiorno [%d m]" <altitude> (gSCD40)
+    ["Measurement"]
+
+Number:Temperature SCD401_TempOffset "Offset Temperatura Soggiorno [%.2f °C]" <temperature_hot> (gSCD40)
+    ["Setpoint", "Temperature"]
+
+// ------------------------------------------------------------------------------
+// ITEM INTERNI (per gestione debouncing e auto-persist)
+// ------------------------------------------------------------------------------
+
+Number SCD401_LastChangeMillis "Timestamp ultima modifica (ms)"
+Number SCD401_AltitudePending "Altitudine in attesa di invio (m)"
+Number SCD401_TempOffsetPending "Offset temperatura in attesa di invio (°C)"
+Number SCD401_SendTimestamp "Timestamp ultimo invio al device (ms)"
+
+// ------------------------------------------------------------------------------
+// METADATA (Opzionale - per UI più ricche)
+// ------------------------------------------------------------------------------
+
+// Metadata per Google Home / Alexa (se integrati)
+// SCD40_Temperature1 [ "Measurement", "Temperature" ]
+// SCD40_Humidity1 [ "Measurement", "Humidity" ]
+// SCD40_CO2_1 [ "Measurement", "CarbonDioxide" ]
+
+
+
+
+
+
+// ------------------------------------------------------------------------------
+// SENSORI (Read-only)
+// ------------------------------------------------------------------------------
+Switch SCD402_In1 "Ingresso 1 Letto" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:1#booleanstate-statevalue" }
+Switch SCD402_In2 "Ingresso 2 Letto" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:2#booleanstate-statevalue" }
+Switch SCD402_In3 "Ingresso 3 Letto" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:3#booleanstate-statevalue" }
+Switch SCD402_In4 "Ingresso 4 Letto" <input> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:4#booleanstate-statevalue" }
+// ------------------------------------------------------------------------------
+// Uscite (Momentary e Latching)
+// ------------------------------------------------------------------------------
+
+Switch SCD402_Out1 "Uscita 1 Letto" <output> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:5#onoffcontrol-onoff" }
+Switch SCD402_Out2 "Uscita 2 Letto" <output> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:6#onoffcontrol-onoff" }
+
+// ------------------------------------------------------------------------------
+// SENSORI (Read-only)
+// ------------------------------------------------------------------------------   
+
+Number SCD402_AirQuality "Qualità Aria Letto [MAP(airquality.map):%s]" <qualityofservice> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "AQI"]
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:7#airquality-airquality" }
+
+Number:Dimensionless SCD402_CO2 "CO2 Letto [%.0f ppm]" <gas> (gSCD40, gBedroom1HVAC) 
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:8#airquality-airquality" } 
+
+Number:Temperature SCD402_Temperature "Temperatura Letto [%.1f °C]" <temperature> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "Temperature"]
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:9#temperaturemeasurement-measuredvalue" }
+
+Number SCD402_Humidity "Umidità Letto [%.1f %%]" <humidity> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "Humidity"] 
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:10#relativehumiditymeasurement-measuredvalue" }
+
+
+
+// ------------------------------------------------------------------------------_
+// CONTROLLI VIRTUALI - SWITCH (Momentary e Latching)
+// ------------------------------------------------------------------------------
+
+Switch SCD402_Calibrate "Calibra Letto (400 ppm)" <settings> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:11#onoffcontrol-onoff" }
+
+Switch SCD402_ASC "Auto-Calibrazione ASC Letto" <switch> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:12#onoffcontrol-onoff" }
+
+Switch SCD402_LowPower "Modalità Risparmio Energetico Letto" <energy> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:13#onoffcontrol-onoff" }
+
+Switch SCD402_Persist "Salva Impostazioni Letto" <save> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:14#onoffcontrol-onoff" }
+
+Switch SCD402_SelfTest "Autotest Sensore Letto" <test> (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:15#onoffcontrol-onoff" }
+
+// ------------------------------------------------------------------------------
+// CONTROLLI NUMERICI - Item RAW (nascosti dall'UI)
+// ------------------------------------------------------------------------------
+// Questi sono i dimmer Matter originali (0-254)
+// NON usarli direttamente - usa i proxy qui sotto
+
+Dimmer SCD402_Altitudine_Raw "Altitudine Raw Letto [%d]" (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:16#levelcontrol-level" }
+
+Dimmer SCD402_TempOffset_Raw "Offset Temperatura Raw Letto [%d]" (gSCD40)
+    { channel="matter:node:79ba0f3e8c:17913622935080565141:17#levelcontrol-level" }
+
+// ------------------------------------------------------------------------------
+// CONTROLLI NUMERICI - Item PROXY (da usare nelle UI)
+// ------------------------------------------------------------------------------
+// Questi item hanno valori intuitivi e gestiscono la conversione automatica
+
+Number:Length SCD402_Altitudine "Altitudine Letto [%d m]" <altitude> (gSCD40)
+    ["Measurement"]
+
+Number:Temperature SCD402_TempOffset "Offset Temperatura Letto [%.2f °C]" <temperature_hot> (gSCD40)
+    ["Setpoint", "Temperature"]
+
+// ------------------------------------------------------------------------------
+// ITEM INTERNI (per gestione debouncing e auto-persist)
+// ------------------------------------------------------------------------------
+
+Number SCD402_LastChangeMillis "Timestamp ultima modifica (ms)"
+Number SCD402_AltitudePending "Altitudine in attesa di invio (m)"
+Number SCD402_TempOffsetPending "Offset temperatura in attesa di invio (°C)"
+Number SCD402_SendTimestamp "Timestamp ultimo invio al device (ms)"
+
+// ------------------------------------------------------------------------------
+// METADATA (Opzionale - per UI più ricche)
+// ------------------------------------------------------------------------------
+
+// Metadata per Google Home / Alexa (se integrati)
+// SCD40_Temperature1 [ "Measurement", "Temperature" ]
+// SCD40_Humidity1 [ "Measurement", "Humidity" ]
+// SCD40_CO2_1 [ "Measurement", "CarbonDioxide" ]
+
+
+Number ESP32C3D1_AirQuality "Qualità Aria Esterno [MAP(airquality.map):%s]" <qualityofservice>  ["Measurement", "AQI"]
+    { channel="matter:node:79ba0f3e8c:12573396839258583518:5#airquality-airquality" } 

@@ -1,25 +1,25 @@
 Group gInfluxdb
 Group gInfluxdb1
-Group:Number:AVG gAvgTemperatura "Temperatura media interna [%.1f °C]" <temperature> (gGroundFloor)
+Group:Number:AVG gAvgTemperatura "Temperatura media interna [%.1f °C]" <temperature> (gPianoterra)
 Group gAstroRadation "Astro" 
 Group gWeather "Che tempo che fa" ["WeatherService"]
 Group gMapDb
 Group gSystemInfo
-Group gGroundFloorSpeaker "Sonoro" ["Speaker"]
-Group gSonos
+Group gMQTT
+Group gBattery "Batterie"
+Group gMatter
+Group gMatter_Aquara
 
-Group gBattery "Batterie" 
-Group gCleaningRobot "Roomba" ["CleaningRobot"]
-Group gTappparelle "Gruppo Tapparelle" <rollershutter> 
+Group gTappparelle "Gruppo Tapparelle" <rollershutter> {alexa="Blind"} 
 
 Group gNetwork
 
 Group  thermostatGroup { ga="Thermostat" [ thermostatModes="1=AUTO:WINDOW_OPEN,2=DIS:BOOST,3=MAN", thermostatTemperatureRange="10,30", useFahrenheit=false ] }
 Group  gHouseAlarm "House Alarm" { ga="SecuritySystem" [ pinNeeded="1234", armLevels="L1=Level 1,L2=Level 2" ] }
 
-Group:Number:AVG gAvgUmidita "Umidità media interna [%.0f %%]" <humidity> (gGroundFloor)
+Group:Number:AVG gAvgUmidita "Umidità media interna [%.0f %%]" <humidity> (gPianoterra)
 
-Group:Number:AVG gAvgPressione "Pressione media [%.1f mbar]" (gGroundFloor) 
+Group:Number:AVG gAvgPressione "Pressione media [%.1f mbar]" (gPianoterra) 
 Group:Switch:OR(ON,OFF) gSwCondPower "Power condizionatori [%d]" <switch>
 Group:String:EQUALITY gEqCondMode "Modo Lavoro ALL" <settings> (gMapDb)
 Group:Number:EQUALITY gEqCondSetPoint "SetPoint All [%.1f °C]" <temperature> (gMapDb)
@@ -27,79 +27,85 @@ Group:Number:AVG gAvgCondTemp "Temperatura media Daikin [%.1f °C]" <temperature
 Group:Switch:OR(ON,OFF)   gPresence     "gPresence" <icon_presence>
 //Group:Number EQUALITY gBlinds "Chiudi/Apri Tapperelle" <rollershutter>
 
-Group gBuilding "Building" ["Building"]
-    Group gNetworkAppliance "Dispositivi di rete" (gBuilding)["NetworkAppliance"]
-    Group gSmartphone "SmartPhone" (gBuilding) ["Smartphone"]
-    Group gAlarmSystem "Antintrusione" (gBuilding) ["AlarmSystem"]
-    Group gIndoor "Indoor" (gBuilding) ["Indoor"] 
-        Group gGroundFloor "Piano terra" (gIndoor) ["GroundFloor"]     
-        Group gCorridor "Corridoio" (gGroundFloor) ["Corridor"]
-            //Group gCorridorTemp "Termometro" (gCorridor) ["HVAC"]
-            Group gCorridorLight "Luce Corridoio" <lightbulb> (gCorridor)  ["Lightbulb"]
-            Group gCorridorMotionDetector "IR Corridoio" (gCorridor) ["MotionDetector"]
-            Group gCorridorCaldaia "Stato caldaia" (gCorridor) ["Boiler"]
-        
-        Group gCorridor2 "Ingresso" (gGroundFloor) ["Corridor"]
-            //Group:Dimmer:EQUALITY gIkeaEqualityCorridorB "Ingresso Intesità [%d %%]" <light> (gCorridor2) ["Lightbulb"]
-            //Group:Number:EQUALITY gIkeaEqualityCorridorCT "Ingresso Temperatura [%.0f K]" <light> (gCorridor2) ["Lightbulb"]
-            Group gIkeaCorridorB "Ingresso Intesità [%d %%]" <light> (gCorridor2) ["Lightbulb"]
-            Group:Number gIkeaCorridorCT "Ingresso Temperatura [%.0f K]" <light> (gCorridor2) ["Lightbulb"]
-            Group gCorridor2PowerOutlet "Ingresso Prese " (gCorridor2)  ["PowerOutlet"]
-        
-        Group gBedroom1 "Camera da letto" <bedroom> (gGroundFloor) ["Bedroom"]
-            //Group gBedroom1Temp "Termometro" (gBedroom1) ["HVAC"]
-            Group gBedroom1Condizionamento "Controllo condizionamento Camera da Letto" (gBedroom1) ["HVAC"]
-            Group gBedroom1Blind "Tapparella" (gBedroom1) ["Blinds"]
+//Group gBuilding "Building" ["Building"]
 
-        Group gBedroom2 "Cameretta" (gGroundFloor) ["Bedroom"] { synonyms="Oli's Room" }
-           // Group gBedroom2Temp "Termometro" (gBedroom2) ["HVAC"]
-            Group gBedroom2Condizionamento "Controllo condizionamento Cameretta" <climate> (gBedroom2) ["HVAC"]
-            Group gBedroom2Light "Luce Cameretta" <lightbulb> (gBedroom2) ["Lightbulb"]
-            Group gBedroom2MotionDetector "IR Cameretta" (gBedroom2) ["MotionDetector"]
-            Group gBedroom2Speaker "Speaker Cameretta" (gBedroom2) ["Speaker"]
-            Group gBedroom2Blind "Tapparelle" (gBedroom2) ["Blinds"]
-
-        Group gOffice "Studio" (gGroundFloor) ["Office"]
-            Group gOfficeCondizionamento "Controllo condizionamento Studio" <climate> (gOffice) ["HVAC"]
-            Group gOfficeSpeaker "Speaker Studio" (gOffice) ["Speaker"]
-            Group gOfficeBlind "Tapparelle" (gOffice) ["Blinds"]
-            Group gOfficeTemp "Temperatura/Umidità" (gOffice) ["HVAC"]
+    Group gCasa "Edificio" ["House"] 
+        Group gScale "Scale" (gCasa) ["Corridor"]
+            Group gPortoneLight "Luce Portone" <lightbulb> (gScale) ["Lightbulb"]
+            Group gPortoneLock "Apriportoni" <keyring> (gScale) ["Lock"]
         
-        Group gBagnoVasca "Bagno" (gGroundFloor) ["Bathroom"]
-        
-        Group gBagnoDoccia "Bagno doccia" (gGroundFloor) ["Bathroom"]
-        
-        Group gLivingroom "Soggiorno" (gGroundFloor) ["LivingRoom"]
-            // Group gLumi3 "Termometro" (gLivingroom) ["HVAC"]
-            Group gLivingroomPowerOutlet "Prese Soggiorno" (gLivingroom)  ["PowerOutlet"]
-            Group gLivingroomCondizionamento "Controllo condizionamento Soggiorno"  <climate> (gLivingroom) ["HVAC"]
-            Group gQuadroElettrico "Quadro Elettrico" (gLivingroom) ["Sensor"]
-            Group gLivingRoomBlind "Tapparelle" (gLivingroom) ["Blinds"]
-            Group gLivingroomTemp "Temperatura/Umidità" (gLivingroom) ["HVAC"]
-            Group gLivingroomMotion "IR Occhio" (gLivingroom) ["MotionDetector"]
-            Group gLivingroomTV "TV" (gLivingroom) ["Projector"]
-
-        Group gKitchen "Cucina" (gGroundFloor) ["Kitchen"]
-            Group gKitchenSpeaker "Speaker Cucina" (gKitchen) ["Speaker"]
-            Group gWaterSensor2 "Presenza acqua" (gKitchen) ["Sensor"]
-            Group gKitchenPowerOutlet "Prese Cucina" (gKitchen)  ["PowerOutlet"]
+        Group gPianoterra "Appartamento PT" (gCasa) ["Apartment"]     
+            Group gNetworkAppliance "Dispositivi di rete" (gPianoterra)["NetworkAppliance"]
+            Group gAlarmSystem "Antintrusione" (gPianoterra) ["AlarmSystem"]
+            Group gSmartphone "SmartPhone" (gPianoterra) ["Smartphone"]
             
-    Group gScale "Scale" (gIndoor) ["Corridor"]
-        // Group gLumi2 "Termometro" (gScale) ["HVAC"]
-        Group gPortoneLight "Luce Portone" <lightbulb> (gScale) ["Lightbulb"]
-        Group gPortoneLock "Apriportoni" <keyring> (gScale) ["Lock"]
-    Group gGarage "Garage" (gIndoor) ["Garage"]
-        Group gWaterSensor1 "Sensore acqua" (gGarage) ["Sensor"]
-        Group gGarageLight "Luce" <lightbulb> (gGarage) ["Lightbulb"]
-        Group gGarageDoor "Serranda Garage" (gGarage) ["GarageDoor"]
-        Group gGarageMotionDetector "IR Garage" (gGarage) ["MotionDetector"]
-        Group gValve "Elettrovalvola" (gGarage) ["Valve"]
-        Group gTasmota "Flussometro" (gGarage) ["Sensor"]
-        Group gInverter "Inverter" (gGarage) ["Inverter"]
-        Group gMeter "Meter Inverter"(gGarage) ["Inverter"]
-        Group gFibaro3 "Termometro" (gGarage) ["HVAC"]
-        Group gGaragePowerOut "Prese Garage" (gGarage)  ["PowerOutlet"]
+            Group gCorridor "Corridoio" (gPianoterra) ["Corridor"]
+                Group gCorridorTemp "Sensore SONOFF" (gCorridor) ["HVAC"]
+                Group gCorridorLight "Luce Corridoio" <lightbulb> (gCorridor)  ["Lightbulb"]
+                Group gCorridorMotionDetector "IR Corridoio" (gCorridor) ["MotionDetector"]
+                Group gCorridorCaldaia "Stato caldaia" (gCorridor) ["Boiler"]
         
-    Group gOutdoor "Outdoor" (gBuilding) ["Outdoor"]
-        Group gGarden "Giardino" (gOutdoor) ["Garden"]
-        Group gGardenBlind "Pergotenda" (gGarden) ["Blinds"]
+            Group gCorridor2 "Ingresso" (gPianoterra) ["Corridor"]
+                //Group:Dimmer:EQUALITY gIkeaEqualityCorridorB "Ingresso Intesità [%d %%]" <light> (gCorridor2) ["Lightbulb"]
+                //Group:Number:EQUALITY gIkeaEqualityCorridorCT "Ingresso Temperatura [%.0f K]" <light> (gCorridor2) ["Lightbulb"]
+                Group gIkeaCorridorB "Ingresso Intesità [%d %%]" <light> (gCorridor2) ["Lightbulb"]
+                Group:Number gIkeaCorridorCT "Ingresso Temperatura [%.0f K]" <light> (gCorridor2) ["Lightbulb"]
+                Group gCorridor2PowerOutlet "Ingresso Prese " (gCorridor2)  ["PowerOutlet"]
+        
+            Group gBedroom1 "Camera da letto" <bedroom> (gPianoterra) ["Bedroom"]
+                //Group gBedroom1Temp "Termometro" (gBedroom1) ["HVAC"]
+                Group gBedroom1Condizionamento "Controllo condizionamento Camera da Letto" (gBedroom1) ["AirConditioner"]
+                Group gBedroom1Blind "Tapparella" (gBedroom1) ["Blinds"]
+                Group gBedroom1Speaker "Speaker Letto" (gBedroom1) ["Speaker"]
+                Group gBedroom1HVAC "Temperatura/Umidità" (gBedroom1) ["HVAC"]
+
+            Group gBedroom2 "Cameretta" (gPianoterra) ["Bedroom"] { synonyms="Oli's Room" }
+            // Group gBedroom2Temp "Termometro" (gBedroom2) ["HVAC"]
+                Group gBedroom2Condizionamento "Controllo condizionamento Cameretta" <climate> (gBedroom2) ["AirConditioner"]
+                Group gBedroom2Light "Luce Cameretta" <lightbulb> (gBedroom2) ["Lightbulb"]
+                Group gBedroom2MotionDetector "IR Cameretta" (gBedroom2) ["MotionDetector"]
+                Group gBedroom2Speaker "Speaker Cameretta" (gBedroom2) ["Speaker"]
+                Group gBedroom2Blind "Tapparelle" (gBedroom2) ["Blinds"]
+
+            Group gOffice "Studio" (gPianoterra) ["Office"]
+                Group gOfficeCondizionamento "Controllo condizionamento Studio" <climate> (gOffice) ["AirConditioner"]
+                Group gOfficeSpeaker "Speaker Studio" (gOffice) ["Speaker"]
+                Group gOfficeBlind "Tapparelle" (gOffice) ["Blinds"]
+                Group gOfficeTemp "Temperatura/Umidità" (gOffice) ["HVAC"]
+                Group gCleaningRobot "Roomba" (gOffice) ["CleaningRobot"]
+        
+            Group gBagnoVasca "Bagno" (gPianoterra) ["Bathroom"]
+        
+            Group gBagnoDoccia "Bagno doccia" (gPianoterra) ["Bathroom"]
+        
+            Group gLivingroom "Soggiorno" (gPianoterra) ["LivingRoom"]
+                // Group gLumi3 "Termometro" (gLivingroom) ["HVAC"]
+                Group gLivingroomPowerOutlet "Prese Soggiorno" (gLivingroom)  ["PowerOutlet"]
+                Group gLivingroomCondizionamento "Controllo condizionamento Soggiorno"  <climate> (gLivingroom) ["AirConditioner"]
+                Group gQuadroElettrico "Quadro Elettrico" (gLivingroom, gMapDb) ["Sensor"]
+                Group gLivingRoomBlind "Tapparelle" (gLivingroom) ["Blinds"]
+                Group gLivingroomHVAC "Temperatura/Umidità" (gLivingroom) ["HVAC"]
+                Group gLivingroomMotion "IR Occhio" (gLivingroom) ["MotionDetector"]
+                Group gLivingroomTV "TV" (gLivingroom) ["Projector"]
+                Group gLivingSpeaker "Speaker Soggiorno" (gLivingroom) ["Speaker"]
+
+            Group gKitchen "Cucina" (gPianoterra) ["Kitchen"]
+                Group gKitchenSpeaker "Speaker Cucina" (gKitchen) ["Speaker"]
+                Group gWaterSensor2 "Presenza acqua" (gKitchen) ["Sensor"]
+                Group gKitchenPowerOutlet "Prese Cucina" (gKitchen)  ["PowerOutlet"]
+            
+            Group gGarden "Giardino" (gPianoterra) ["Garden"]
+                Group gGardenBlind "Pergotenda" (gGarden) ["Blinds"]
+                   
+            Group gGarage "Garage" (gPianoterra) ["Garage"]
+                Group gWaterSensor1 "Sensore acqua" (gGarage) ["Sensor"]
+                Group gGarageLight "Luce" <lightbulb> (gGarage) ["Lightbulb"]
+                Group gGarageDoor "Serranda Garage" (gGarage) ["GarageDoor"]
+                Group gGarageMotionDetector "IR Garage" (gGarage) ["MotionDetector"]
+                Group gValve "Elettrovalvola" (gGarage) ["Valve"]
+                Group gInverter "Inverter" (gGarage,gMapDb) ["Inverter"]
+                Group gMeter "Meter Inverter"(gGarage, gMapDb) ["Inverter"]
+                Group gFibaro3 "Termometro" (gGarage) ["HVAC"]
+                Group gGaragePowerOut "Prese Garage" (gGarage)  ["PowerOutlet"]
+        
+   

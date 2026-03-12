@@ -1,4 +1,4 @@
-sitemap Casatenovo label="Benvenuto a Casa" 
+sitemap casatenovo label="Benvenuto a Casa" 
 { 
 	Frame label=Oggi{
 		Text item=Date icon="calendar"
@@ -427,5 +427,108 @@ sitemap Casatenovo label="Benvenuto a Casa"
 		Default item=Roomba_Rssi label="RSSI WIFI"
 		Default item=Roomba_snr label="SNR WIFI"
 	}
+	Frame label="Misurazioni Ambientali" {
+	/*      Text item=SCD40_CO2_1 icon="gas" valuecolor=[
+				>1500="red",
+				>1000="orange",
+				>800="yellow",
+				<=800="green"
+			] */
+		Text item=SCD401_CO2 icon="gas"
+		Text item=SCD401_Temperature icon="temperature"
+		Text item=SCD401_Humidity icon="humidity"
+		Text item=SCD401_AirQuality icon="qualityofservice"
 
+		Setpoint item=SCD40_Altitudine
+				//label="Altitudine [%d m]"
+				icon="altitude"
+				minValue=0
+				maxValue=5000
+				step=10
+
+		Slider item=SCD401_TempOffset
+				//label="Offset Temperatura [%.2f °C]"
+				icon="temperature_hot"
+				minValue=0
+				maxValue=10
+				step=0.1
+
+		Switch item=SCD401_ASC
+				//label="Auto-Calibrazione ASC"
+				icon="switch"
+		Switch item=SCD401_Calibrate
+				//label="Calibra a 400 ppm"
+				icon="settings"
+				mappings=[ON="Calibra"]
+
+		Switch item=SCD401_SelfTest
+				//label="Esegui Autotest"
+				icon="test"
+				mappings=[ON="Test"]
+
+		Switch item=SCD401_Persist
+				//label="Salva Configurazione"
+				icon="save"
+				mappings=[ON="Salva"]
+
+		Switch item=SCD401_LowPower
+				//label="Risparmio Energetico"
+				icon="energy"
+		Text label="Dati Raw" icon="database" {
+			Text item=SCD401_Altitudine_Raw
+				//label="Altitudine Raw [%d]"
+				visibility=[SCD40Altitudine1_Raw!=NULL]
+
+			Text item=SCD401_TempOffset_Raw
+				//label="Offset Raw [%d]"
+				visibility=[SCD40_TempOffset1_Raw!=NULL]
+		}
+		Text item=SCD402_CO2 icon="gas"
+		Text item=SCD402_Temperature icon="temperature"
+		Text item=SCD402_Humidity icon="humidity"
+		Text item=SCD402_AirQuality icon="qualityofservice"
+		Setpoint item=SCD402_Altitudine
+				//label="Altitudine [%d m]"
+				icon="altitude"
+				minValue=0
+				maxValue=5000
+				step=10
+
+		Slider item=SCD402_TempOffset
+				//label="Offset Temperatura [%.2f °C]"
+				icon="temperature_hot"
+				minValue=0
+				maxValue=10
+				step=0.1
+		Switch item=SCD402_ASC
+				//label="Auto-Calibrazione ASC"
+				icon="switch"
+		Switch item=SCD402_Calibrate
+				//label="Calibra a 400 ppm"
+				icon="settings"
+				mappings=[ON="Calibra"]
+
+		Switch item=SCD402_SelfTest
+				//label="Esegui Autotest"
+				icon="test"
+				mappings=[ON="Test"]
+
+		Switch item=SCD402_Persist
+				//label="Salva Configurazione"
+				icon="save"
+				mappings=[ON="Salva"]
+
+		Switch item=SCD402_LowPower
+				//label="Risparmio Energetico"
+				icon="energy"
+
+		Text label="Dati Raw" icon="database" {
+			Text item=SCD402_Altitudine_Raw
+				//label="Altitudine Raw [%d]"
+				visibility=[SCD40Altitudine1_Raw!=NULL]
+			Text item=SCD402_TempOffset_Raw
+				//label="Offset Raw [%d]"
+				visibility=[SCD40_TempOffset1_Raw!=NULL]
+		}
+	}	
 }

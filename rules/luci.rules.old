@@ -1,0 +1,80 @@
+var int flag = 0  // Tiene traccia del livello di luminosità impostato (0=spento, 1=basso, 2=alto)
+var Timer corridoioTimer = null  // Timer per lo spegnimento ritardato
+
+rule "Accendi luce corridoio"
+when
+    Item FGBS222_013_Input2 changed  // Sensore di movimento corridoio
+then
+    
+    // === ACCENSIONE: sensore attivato, luce spenta, dopo mezzogiorno ===
+    //if (FGBS222_013_Input2.state == ON && FGD211_003_SwitchDimmer.state == 0 && now.getHour > 12) {
+      if (FGBS222_013_Input2.state == ON && (FGD211_003_SwitchDimmer.state as Number) <= 10 && now.getHour > 12 && (now.getHour < 22 || now.getHour >= 9)) {  
+        // Se c'è un timer di spegnimento in corso, cancellalo
+        if (corridoioTimer !== null) {
+            corridoioTimer.cancel()
+            corridoioTimer = null
+        }
+        
+        // Molto buio (sole sotto -20°): accendi più forte
+        if (SunElevation.state < -20) {
+            flag = 2
+            FGD211_003_SwitchDimmer.sendCommand(45)
+        }
+        // Abbastanza buio (sole sotto 10°): accendi piano
+        else if (SunElevation.state < 10) {
+            flag = 1
+            FGD211_003_SwitchDimmer.sendCommand(15)
+        }
+        // Se SunElevation >= 10, c'è abbastanza luce naturale, non accendere
+    }
+    
+    // === SPEGNIMENTO RITARDATO: sensore disattivato e luce accesa da noi ===
+    else if (FGBS222_013_Input2.state == OFF && flag > 0) {
+        
+        // Determina il livello atteso e il ritardo in base al flag
+        val expectedLevel = if (flag == 1) 15 else 45
+        val delaySeconds = if (flag == 1) 20 else 50  // Più buio = più tempo prima di spegnere
+        
+        // Verifica che la luce sia ancora al livello che abbiamo impostato
+        // (potrebbe essere stata cambiata manualmente)
+        if ((FGD211_003_SwitchDimmer.state as Number) == expectedLevel) {
+            
+            // Cancella eventuale timer precedente (es. passaggio multiplo)
+            if (corridoioTimer !== null) {
+                corridoioTimer.cancel()
+            }
+            
+            // Crea timer per spegnimento ritardato
+            corridoioTimer = createTimer(now.plusSeconds(delaySeconds), [|
+                
+                // Ricontrolla lo stato prima di spegnere
+                // (qualcuno potrebbe aver cambiato la luce nel frattempo)
+                if ((FGD211_003_SwitchDimmer.state as Number) == expectedLevel) {
+                    FGD211_003_SwitchDimmer.sendCommand(0)
+                }
+                
+                flag = 0  // Reset del flag
+                corridoioTimer = null  // Pulizia riferimento timer
+            ])
+        }
+    }
+end
+
+//http://www.cronmaker.com/
+rule "Luce corridoio 22:30 ON invia un comando ogni 10 minuti dalle 22 alle 8"
+when
+    Time cron "0 30/10 22-8 * * ? *" 
+then
+    if (FGD211_003_SwitchDimmer.state != 10) {
+    FGD211_003_SwitchDimmer.sendCommand(10) //Portato a 5 da 10 per far vedere le luci dell'albero di Natale
+    }
+end
+
+rule "Luce corridoio 09:00 OFF "
+when
+    Time cron "0 0 9 1/1 * ? *"
+then
+    FGD211_003_SwitchDimmer.sendCommand(0)
+    IkeaLed1B.sendCommand(0)
+    IkeaLed2B.sendCommand(0)
+end

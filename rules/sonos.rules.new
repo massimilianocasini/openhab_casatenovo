@@ -1,0 +1,34 @@
+rule "Sonos Group All from Widget"
+when
+    Item Sonos_Group_All_Trigger received command
+then
+    val coordinator = receivedCommand.toString()
+    val studio_udn = SonosEraStudio_Coordinator.state.toString()
+    val letto_udn = SonosEraLetto_Coordinator.state.toString()
+    val beam_udn = SonosBeam_Coordinator.state.toString()
+    
+    logInfo("Sonos", "Raggruppamento tutti con coordinatore: " + coordinator)
+    
+    switch(coordinator) {
+        case studio_udn: {
+            SonosEraStudio_Add.sendCommand(letto_udn)
+            Thread::sleep(500)
+            SonosEraStudio_Add.sendCommand(beam_udn)
+        }
+        case beam_udn: {
+            SonosBeam_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosBeam_Add.sendCommand(letto_udn)
+        }
+        case letto_udn: {
+            SonosEraLetto_Add.sendCommand(studio_udn)
+            Thread::sleep(500)
+            SonosEraLetto_Add.sendCommand(beam_udn)
+        }
+        default: {
+            logWarn("Sonos", "Coordinatore non riconosciuto: " + coordinator)
+        }
+    }
+    
+    logInfo("Sonos", "Raggruppamento completato")
+end

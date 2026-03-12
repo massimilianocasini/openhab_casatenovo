@@ -1,1 +1,6 @@
-astro:sun:home  [ geolocation="42.0274994,12.4535409", altitude=88, interval=300 ]
+Thing astro:sun:local_offset60 "Sole locale con offset -60 minuti" @ "Esterno" [
+    geolocation="42,12,300" // Latitudine di Roma
+    ] {
+    Channels:
+        Type rangeEvent : set#event "Tramonto offset -60min" [ offset=-60 ] 
+}

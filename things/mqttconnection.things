@@ -8,6 +8,7 @@ Bridge mqtt:broker:cm4home [ host="cm4home.local", secure=false, username="openh
         Type number : ingresso3 "Assenza 220V" [ stateTopic = "prodino/input/3/state" ]
         Type number : ingresso4 "Anomalia" [ stateTopic = "prodino/input/4/state" ]
         Type switch : output1 "Alarm system key" [commandTopic = "prodino/relay/1/set", on = "ON", off = "OFF"]
+        Type switch : prodino_lwt "Last Will and Testament" [ stateTopic = "prodino/status", on = "online", off = "offline"]
   }
 
   Thing topic cm3panel "CM3PANEL" @ "Cucina" {
@@ -19,6 +20,14 @@ Bridge mqtt:broker:cm4home [ host="cm4home.local", secure=false, username="openh
         Type number : flusso "Contatore Acqua" [ stateTopic = "tele/tasmota_026BB3/SENSOR", transformationPattern = "JSONPATH:$.COUNTER.C1"]
         Type switch : resetFlusso "Reset contatore acqua" [commandTopic = "cmnd/tasmota_026BB3/counter1", on = "0"]
         Type switch : elettrovalvola "Elettrovalvola acqua" [commandTopic = "cmnd/tasmota_026BB3/POWER", on = "ON", off = "OFF"]
-        Type string : lwt "Last Will and Testament" [ stateTopic = "tele/tasmota_026BB3/LWT", on = "Online", off = "Offline"]
+        Type switch : tasmota_lwt "Last Will and Testament" [ stateTopic = "tele/tasmota_026BB3/LWT", on = "Online", off = "Offline"]
+  }
+  Thing topic esp32c3 "ESP32-C3" @ "Studio" {
+      Channels:
+        Type number : ingresso1 "Stato IN1" [ stateTopic = "esp32c3/input1"]
+        Type number : ingresso2 "Stato IN2" [ stateTopic = "esp32c3/input2"]
+        Type number : output1 "Stato OUT1" [ stateTopic = "esp32c3/output1"]
+        Type number : output2 "Stato OUT2" [ stateTopic = "esp32c3/output2"]
+        //Type switch : esp32c3_lwt "Last Will and Testament" [ stateTopic = "esp32c3/", on = "online", off = "offline"]
   }
 } 

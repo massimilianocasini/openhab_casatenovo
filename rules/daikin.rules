@@ -30,7 +30,7 @@ then
             logInfo("rules", "Timer HEAT rescheduled")
               myTimer_daikin.reschedule(now.plusSeconds(15))
           } else {
-          myTimer_daikin(now.plusSeconds(15), [|
+          myTimer_daikin = createTimer(now.plusSeconds(15), [|
             logInfo("rules", "Timer HEAT created")
             gEqCondMode.sendCommand("HEAT")
             gEqCondSetPoint.sendCommand(22)
