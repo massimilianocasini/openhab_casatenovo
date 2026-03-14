@@ -34,10 +34,10 @@ Switch SCD401_Out2 "Uscita 2 Soggiorno" <output> (gSCD40)
 // SENSORI (Read-only)
 // ------------------------------------------------------------------------------
 
-Number SCD401_AirQuality "Qualità Aria Soggiorno [MAP(airquality.map):%s]" <qualityofservice> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "AQI"]
+Number SCD401_AirQuality "Qualità Aria Soggiorno [MAP(airquality.map):%s]" <carbondioxide> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "CO2"]
     { channel="matter:node:79ba0f3e8c:1177191750859777324:7#airquality-airquality" }
 
-Number:Dimensionless SCD401_CO2 "CO2 Soggiorno [%.0f ppm]" <gas> (gSCD40, gLivingroomHVAC) 
+Number:Dimensionless SCD401_CO2 "CO2 Soggiorno [%.0f ppm]" <carbondioxide> (gSCD40, gLivingroomHVAC) ["Measurement", "CO2"]
     { channel="matter:node:79ba0f3e8c:1177191750859777324:8#airquality-airquality" } 
 
 Number:Temperature SCD401_Temperature "Temperatura Soggiorno [%.1f °C]" <temperature> (gSCD40, gInfluxdb, gLivingroomHVAC) ["Measurement", "Temperature"]
@@ -105,12 +105,6 @@ Number SCD401_SendTimestamp "Timestamp ultimo invio al device (ms)"
 // SCD40_Temperature1 [ "Measurement", "Temperature" ]
 // SCD40_Humidity1 [ "Measurement", "Humidity" ]
 // SCD40_CO2_1 [ "Measurement", "CarbonDioxide" ]
-
-
-
-
-
-
 // ------------------------------------------------------------------------------
 // SENSORI (Read-only)
 // ------------------------------------------------------------------------------
@@ -135,10 +129,10 @@ Switch SCD402_Out2 "Uscita 2 Letto" <output> (gSCD40)
 // SENSORI (Read-only)
 // ------------------------------------------------------------------------------   
 
-Number SCD402_AirQuality "Qualità Aria Letto [MAP(airquality.map):%s]" <qualityofservice> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "AQI"]
+Number SCD402_AirQuality "Qualità Aria Letto [MAP(airquality.map):%s]" <carbondioxide> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "CO2"]
     { channel="matter:node:79ba0f3e8c:17913622935080565141:7#airquality-airquality" }
 
-Number:Dimensionless SCD402_CO2 "CO2 Letto [%.0f ppm]" <gas> (gSCD40, gBedroom1HVAC) 
+Number:Dimensionless SCD402_CO2 "CO2 Letto [%.0f ppm]" <carbondioxide> (gSCD40, gBedroom1HVAC) ["Measurement", "CO2"]
     { channel="matter:node:79ba0f3e8c:17913622935080565141:8#airquality-airquality" } 
 
 Number:Temperature SCD402_Temperature "Temperatura Letto [%.1f °C]" <temperature> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "Temperature"]
@@ -146,8 +140,6 @@ Number:Temperature SCD402_Temperature "Temperatura Letto [%.1f °C]" <temperatur
 
 Number SCD402_Humidity "Umidità Letto [%.1f %%]" <humidity> (gSCD40, gInfluxdb, gBedroom1HVAC) ["Measurement", "Humidity"] 
     { channel="matter:node:79ba0f3e8c:17913622935080565141:10#relativehumiditymeasurement-measuredvalue" }
-
-
 
 // ------------------------------------------------------------------------------_
 // CONTROLLI VIRTUALI - SWITCH (Momentary e Latching)
@@ -208,7 +200,3 @@ Number SCD402_SendTimestamp "Timestamp ultimo invio al device (ms)"
 // SCD40_Temperature1 [ "Measurement", "Temperature" ]
 // SCD40_Humidity1 [ "Measurement", "Humidity" ]
 // SCD40_CO2_1 [ "Measurement", "CarbonDioxide" ]
-
-
-Number ESP32C3D1_AirQuality "Qualità Aria Esterno [MAP(airquality.map):%s]" <qualityofservice>  ["Measurement", "AQI"]
-    { channel="matter:node:79ba0f3e8c:12573396839258583518:5#airquality-airquality" } 

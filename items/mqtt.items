@@ -1,16 +1,19 @@
 // Prodino
-Number  Prodino0_optoIn0 "Stato Antifurto [%s]" <alarm>         (gAlarmSystem)      ["Status"]              {channel="mqtt:topic:cm4home:prodino:ingresso1", stateDescription="" [options="1=INSERITO, 0=DISINSERITO"]}
-Number  Prodino0_optoIn1 "Allarme [%s]"         <alarm>         (gAlarmSystem)              ["Status"]               {channel="mqtt:topic:cm4home:prodino:ingresso2", stateDescription="" [options="1=ALLARME, 0=RIPOSO"]}
-Number  Prodino0_optoIn2 "Stato 220V [%s]" 	                    (gAlarmSystem)              ["Status"]              {channel="mqtt:topic:cm4home:prodino:ingresso3", stateDescription="" [options="1=MANCANZA, 0=PRESENTE"]}
-Number  Prodino0_optoIn3 "Anomalia [%s]"  	                    (gAlarmSystem)      ["Status"]              {channel="mqtt:topic:cm4home:prodino:ingresso4", stateDescription="" [options="1=PRESENTE, 0=NESSUNA"]}
-Switch  Prodino0_ReleOut1  "Chiave"              <switch>       (gAlarmSystem, gMapDb, gHouseAlarm) ["Switch"] {ga="securitySystemArmed", channel="mqtt:topic:cm4home:prodino:output1", expire="1s,command=OFF"}
-Switch  Prodino_LWT "Stato Prodino [%s]"                        (gAlarmSystem, gMQTT)                      ["Status"]  {channel="mqtt:topic:cm4home:prodino:prodino_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
+Number  Prodino0_optoIn0    "Stato Antifurto [%s]" <alarm>  (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso1", stateDescription="" [options="1=INSERITO, 0=DISINSERITO"]}
+Number  Prodino0_optoIn1    "Allarme [%s]"         <alarm>  (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso2", stateDescription="" [options="1=ALLARME, 0=RIPOSO"]}
+Number  Prodino0_optoIn2    "Stato 220V [%s]" 	  <energy>  (gAlarmSystem)                      ["Status", "Power"]                 {channel="mqtt:topic:cm4home:prodino:ingresso3", stateDescription="" [options="1=MANCANZA, 0=PRESENTE"]}
+Number  Prodino0_optoIn3    "Anomalia [%s]"  	            (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso4", stateDescription="" [options="1=PRESENTE, 0=NESSUNA"]}
+Switch  Prodino0_ReleOut1   "Chiave"              <switch>  (gAlarmSystem, gMapDb, gHouseAlarm) ["Switch"]                          {ga="securitySystemArmed", channel="mqtt:topic:cm4home:prodino:output1", expire="1s,command=OFF"}
+Switch  Prodino_LWT         "Stato Prodino [%s]"            (gAlarmSystem, gMQTT)               ["Status"]                          {channel="mqtt:topic:cm4home:prodino:prodino_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
 
 //Cm3Panel 
 String  Cm3panel    "CM3Panel"  <settings>  {channel="mqtt:topic:cm4home:cm3panel:system"}
 
 // Tasmota Garage
 Number ContatoreAcqua "Contatore acqua [%.0f]" (gValve, gInfluxdb) ["Measurement", "Water"] {channel="mqtt:topic:cm4home:flussometro:flusso"}
-Switch ResetContatoreAcqua "Reset contatore acqua []" (gValve) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:resetFlusso", expire="1s,command=OFF"}
+Switch ResetContatoreAcqua "Reset contatore acqua []" (gValve) ["Control", "Water"] {channel="mqtt:topic:cm4home:flussometro:resetFlusso", expire="1s,command=OFF"}
 Switch ElettrovalvolaAcqua "Elettrovalvola acqua []" (gValve) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:elettrovalvola", stateDescription="" [options="OFF=APERTA, ON=CHIUSA"]}
-Switch LWT "Stato Flussometro [%s]" (gValve, gMQTT) ["Status", "Water"] {channel="mqtt:topic:cm4home:flussometro:tasmota_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
+Switch Tasmota_LWT "Stato Flussometro [%s]" (gValve, gMQTT) ["Status"] {channel="mqtt:topic:cm4home:flussometro:tasmota_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
+
+Number:Dimensionless esp32c3d1_co2  "Qualità aria Studio CO2 [%.0f ppm]"  <carbondioxide> (gInfluxdb) ["Measurement", "CO2"] {unit="ppm", channel="mqtt:topic:cm4home:esp32c3d1:co2"}
+Number:Dimensionless esp32c3d1_tvoc "Total Volatile Organic Compounds Studio [%.0f ppb]" <smoke> (gInfluxdb) ["Measurement", "VOC"] {unit="ppb", channel="mqtt:topic:cm4home:esp32c3d1:tvoc"}

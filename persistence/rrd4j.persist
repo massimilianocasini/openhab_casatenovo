@@ -16,5 +16,9 @@ FGMS001_008_Temp,
 ContatoreAcqua,
 OneCallAPIweatherandforecast_Current_Temperature,
 Power_Used,
-I_AC_Power_Value 										: strategy = everyMinute, restoreOnStartup
+I_AC_Power_Value,
+SE5000_AggregateDayProduction,
+SE5000_AggregateDayConsumption,
+esp32c3d1_co2,
+esp32c3d1_tvoc 										: strategy = everyMinute, restoreOnStartup
 }
