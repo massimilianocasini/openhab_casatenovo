@@ -20,5 +20,6 @@ I_AC_Power_Value,
 SE5000_AggregateDayProduction,
 SE5000_AggregateDayConsumption,
 esp32c3d1_co2,
-esp32c3d1_tvoc 										: strategy = everyMinute, restoreOnStartup
+esp32c3d1_tvoc,
+SE5000_Live_Production 										: strategy = everyMinute, restoreOnStartup
 }

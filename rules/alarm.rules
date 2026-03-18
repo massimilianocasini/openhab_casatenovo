@@ -1,6 +1,6 @@
 var Timer myTimer_alarm = null
 val int timeoutMinutes = 5 // choose an appropriate value
-var int alarmcount = 0 //Conteggio numero di allarmi
+var alarmcount = 0 //Conteggio numero di allarmi
 var receiptRete = null
 var receiptAllarme = null
 rule "Antifurto cambio stato swicth case"
@@ -9,8 +9,8 @@ when
 then
 val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
 
-switch(Prodino0_optoIn0.state) {
-  case  1 : { //Antifurto inserito
+switch(Prodino0_optoIn0.state.toString) {
+  case  "1" : { //Antifurto inserito
     if(myTimer_alarm === null) {
       myTimer_alarm = createTimer(now.plusMinutes(timeoutMinutes ), [|
       myTimer_alarm = null
@@ -26,6 +26,7 @@ switch(Prodino0_optoIn0.state) {
     SonosEraStudio_Control.sendCommand(PAUSE) //Spegni Sonos Studio
     SonosEraLetto_Control.sendCommand(PAUSE) //Spegni Sonos Letto
     SonosBeam_Control.sendCommand(PAUSE) //Spegni Sonos Beam
+    FGD211_003_SwitchDimmer.sendCommand(0) //Spegni luce corridoio
 
     if (DaikinACUnit_Mode_Studio.state == "HEAT" && DaikinACUnit_Power_Studio.state == ON) {
         DaikinACUnit_Power_Studio.sendCommand(OFF)
@@ -44,33 +45,41 @@ switch(Prodino0_optoIn0.state) {
         DaikinACUnit_Power_Letto.sendCommand(OFF)
         telegramActions.sendTelegram("Condizionatore Letto spento")
     }
-    if (now.getHour() < 1 || now.getHour() >=3  ) {
+    if (!(now.hour >= 1 && now.hour < 3)) { // Non chiudere le tapparelle se è notte fonda per evitare di svegliare qualcuno
         TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
         TapparellaStudio.sendCommand(92)
         TapparellaSoggiorno.sendCommand(97)
         TapparellaCameretta.sendCommand(97)
-        logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.getHour )
+        logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.hour )
         Osram01S.sendCommand(OFF) //Spegni luce natale
         FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
     }
     else {
-        logInfo("Alarm.rules", "Tapparelle NON chiuse perchè INSERITO ad orario: " + now.getHour )
+        logInfo("Alarm.rules", "Tapparelle NON chiuse perchè INSERITO ad orario: " + now.hour )
     }
   }
-  case 0: { //Antifurto disinserito
+  case "0": { //Antifurto disinserito
     telegramActions.sendTelegram("Antifurto DIsInserito!")
     logInfo("Alarm.rules", "Antifurto DISINSERITO")
    // Osram01S.sendCommand(ON) //Accendi luce natale
-    if (SunElevation.state >= -10 && now.getHour > 8 && myTimer_alarm === null) {
-        TapparellaLetto.sendCommand(UP)
-        TapparellaStudio.sendCommand(UP)
-        TapparellaSoggiorno.sendCommand(UP)
-        TapparellaCameretta.sendCommand(UP)
-    }
-    if (now.getHour() > 13 && now.getHour() <=23  ) {
+    // Se disinserito entro 5 min dall'inserimento: non aprire tapparelle, solo luce corridoio
+    if (myTimer_alarm !== null) {
+    myTimer_alarm.cancel()
+    myTimer_alarm = null
+    FGD211_003_SwitchDimmer.sendCommand(60)
+    logInfo("Alarm.rules", "Luce corridoio ON: disinserito entro 5 min dall'inserimento")
+  }
+    else if (SunElevation.state >= -10 && now.hour > 8) {
+    // Timer scaduto o mai attivo: apri tapparelle se c'è luce
+    TapparellaLetto.sendCommand(UP)
+    TapparellaStudio.sendCommand(UP)
+    TapparellaSoggiorno.sendCommand(UP)
+    TapparellaCameretta.sendCommand(UP)
+  }
+  //  if (now.hour > 13 && now.hour <=23  ) {
        // FGS221_016_SwitchBinary2.sendCommand(ON)
-       // logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.getHour )
-    }
+       // logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.hour )
+   // }
   }
 }
 end
@@ -82,16 +91,18 @@ then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
   val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
  
-  if(Prodino0_optoIn1.state == 1) {
+  if((Prodino0_optoIn1.state as Number) == 1) { 
     alarmcount = 1
     receiptAllarme = pushoverActions.sendPriorityMessage("Allarme antifurto", "openhab3", 2)
     telegramActions.sendTelegram("Allarme antifurto")
 
   }
-  else if (Prodino0_optoIn1.state == 0 && alarmcount == 1) {
-    pushoverActions.sendMessage("FINE Allarme antifurto", "openhab3")
-    telegramActions.sendTelegram("FINE Allarme antifurto")
-    alarmcount = 0
+  else if ((Prodino0_optoIn1.state as Number) == 0) {
+    if (alarmcount == 1) {
+        pushoverActions.sendMessage("FINE Allarme antifurto", "openhab3")
+        telegramActions.sendTelegram("FINE Allarme antifurto")
+        alarmcount = 0
+    }
     // Cancella il messaggio priority SOLO quando l'allarme finisce
     if( receiptAllarme !== null ) {
       pushoverActions.cancelPriorityMessage(receiptAllarme)
@@ -99,17 +110,20 @@ then
     }
   }
 end
+
 rule "Mancanza rete"
 when
     Item Prodino0_optoIn2 changed
 then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
   val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
-  if(Prodino0_optoIn2.state == 1) {      // Mancanza 220V
+  if ((Prodino0_optoIn2.state as Number) == 1) {      // Mancanza 220V
+        logInfo("Alarm.rules", "Mancanza 220V rilevata") 
         receiptRete = pushoverActions.sendPriorityMessage("Mancanza 220V", "openhab3", 2)
         telegramActions.sendTelegram("Mancanza 220V")
     }
-  else if (Prodino0_optoIn2.state == 0) { // Ripristino 220V
+  else if ((Prodino0_optoIn2.state as Number) == 0) { // Ripristino 220V
+        logInfo("Alarm.rules", "Ripristino 220V")  
         telegramActions.sendTelegram("Ripristino 220V")
         pushoverActions.sendMessage("Ripristino 220V", "openhab3")
         // Cancella il messaggio priority SOLO quando l'allarme finisce
