@@ -52,7 +52,6 @@ rule "Antifurto cambio stato swicth case"
               TapparellaSoggiorno.sendCommand(97)
               TapparellaCameretta.sendCommand(97)
               logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.hour )
-              vFlagTapparellachiusi.postUpdate(1)
               logInfo("Alarm.rules", "Flag chiusura tapparelle impostato da regola antifurto")
               Osram01S.sendCommand(OFF) //Spegni luce natale
               FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
@@ -78,7 +77,6 @@ rule "Antifurto cambio stato swicth case"
             TapparellaStudio.sendCommand(UP)
             TapparellaSoggiorno.sendCommand(UP)
             TapparellaCameretta.sendCommand(UP)
-            vFlagTapparellachiusi.postUpdate(0)
             logInfo("Alarm.rules", "Reset flag chiusura tapparelle dopo disinserimento")
           }
                     //  if (now.hour > 13 && now.hour <=23  ) {
