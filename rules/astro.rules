@@ -1,13 +1,12 @@
 var Timer myTimer_astro2 = null
 var int iAutoOff = 0
-var int vTapparellastatus = 0
-//var int vLuceEsterna = 0
+
 
 rule "Apri tapparelle ad orario" // alle 7:00 dal lunedi al venerdi, solo se non è festivo e non è weekend, e se le tapparelle della camera da letto e dello studio sono ferme, e se la modalità "VoglioDormire" è disattivata
 when
     Time cron "00 00 07 ? * MON,TUE,WED,THU,FRI *"
 then
-    if(Prodino0_optoIn0.state == "DISINSERITO" && isBankHoliday == false && isWeekend == false && TapparellaLettoStatus.state == "stop" && TapparellaStudioStatus.state == "stop" && VoglioDormire.state == OFF)  {
+    if((Prodino0_optoIn0.state as Number).intValue == 0 && isBankHoliday == false && isWeekend == false && TapparellaLettoStatus.state == "stop" && TapparellaStudioStatus.state == "stop" && VoglioDormire.state == OFF)  {
         logInfo("Rule Astro", "Inizio procedura apertura serrande" )
         if(myTimer_astro2 !== null)                     // timer already scheduled, so leave rule
             return;
@@ -71,44 +70,132 @@ then
 }
 end
 
-
-
-
 rule "Esegui azioni in base a SunElevation"
 when
-Item SunElevation changed
+    Item SunElevation changed
 then
-    if(SunElevation.state < 0 && FGS222_004_SwitchBinary1.state == OFF) { // Accensione luce esterna se l'elevazione del sole è minore di 0 gradi
-        logInfo("Rule Astro", "Condizione SunElevation < 0, accendo luce esterna")
+        // --- Guardia NULL su SunElevation ---
+    if(SunElevation.state == NULL) {
+        logWarn("Rule Astro", "SunElevation è NULL, regola ignorata")
+        return;
+    }
+        // --- Valori configurabili ---
+    val int sogliaAlbaTramonto = 0
+    val int sogliaChiusuraTapparelle    = -10 //Soglia per chiudere e resettare variabile tapparelle
+    val int sogliaAperturaTapparelle    = 10 //Soglia per aprire e resettare variabile tapparelle
+    val int sogliaAperturaTapparelle1   = 20 //Soglia usata per aprire tapparelle Studio e Soggiorno
+    val int sogliaAperturaTenda         = 15 //Soglia usata per aprire tenda al mattino
+    val int sogliaChiusuraTenda         = 10 //Soglia usata per resettare variabile chiusura tenda
+    val int posTapparellaLettoNotte     = 92
+    val int posTapparellaStudioNotte    = 92
+    val int posTapparellaSoggiornoNotte = 97
+    val int posTapparellaCamerettaNotte = 97
+//    val int posTapparellaLettoGiorno     = 50
+    val int posTapparellaStudioGiorno    = 50
+    val int posTapparellaSoggiornoGiorno = 50
+//    val int posTapparellaCamerettaGiorno = 50
+    val float sunEl    = (SunElevation.state as Number).floatValue
+    val int flagTapparelleAperte = if(vFlagTapparelleAperte.state == NULL) 0 else (vFlagTapparelleAperte.state as Number).intValue
+    val int flagTapparelleChiuse = if(vFlagTapparelleChiuse.state == NULL) 0 else (vFlagTapparelleChiuse.state as Number).intValue
+    val int flagTendaAperta = if(vFlagTendaAperta.state == NULL) 0 else (vFlagTendaAperta.state as Number).intValue
+    val int flagTendaChiusa = if(vFlagTendaChiusa.state == NULL) 0 else (vFlagTendaChiusa.state as Number).intValue
+     // Prodino0_optoIn0: 0 = DISINSERITO, 1 = INSERITO
+    val int allarme = if(Prodino0_optoIn0.state == NULL) 0 else (Prodino0_optoIn0.state as Number).intValue
+
+    // --- DIAGNOSTICA TEMPORANEA ---
+    //gInfo("Rule Astro", "sunEl=" + sunEl + " flagChiusi=" + flagTapparelleChiuse + " allarme=" + allarme.state)
+
+    // --- Inizializzazione flag se NULL (primo avvio prima di restoreOnStartup) ---
+    if(vFlagTapparelleAperte.state == NULL) {
+        logWarn("Rule Astro", "vFlagTapparelleAperte è NULL, inizializzo a 0")
+        vFlagTapparelleAperte.postUpdate(0)
+    }
+    if(vFlagTapparelleChiuse.state == NULL) {
+        logWarn("Rule Astro", "vFlagTapparellachiusi è NULL, inizializzo a 0")
+        vFlagTapparelleChiuse.postUpdate(0)
+    }
+    if(vFlagTendaAperta.state == NULL) {
+        logWarn("Rule Astro", "vFlagTendaAperta è NULL, inizializzo a 0")
+        vFlagTendaAperta.postUpdate(0)
+    }
+    if(vFlagTendaChiusa.state == NULL) {
+        logWarn("Rule Astro", "vFlagTendaChiusa è NULL, inizializzo a 0")
+        vFlagTendaChiusa.postUpdate(0)
+    }
+
+
+    
+    // --- Luce esterna ---
+    if(sunEl <= sogliaAlbaTramonto && FGS222_004_SwitchBinary1.state == OFF) {
+        logInfo("Rule Astro", "SunElevation <=  (" + sunEl + "°), accendo luce esterna")
         FGS222_004_SwitchBinary1.sendCommand(ON)
-       }// vLuceEsterna = 1
-      // else {
-      //  logInfo("Rule Astro", "Luce portone non accesa perchè lo switch è " + FGS222_004_SwitchBinary1.state.toString() + " e l'elevazione è " + SunElevation.state.toString()) 
-      // }
-    if(SunElevation.state < -10 && SunElevation.state > -12 && vTapparellastatus == 0) { // Chiusura tapparelle se l'elevazione del sole è minore di -10 gradi
-        logInfo("Rule Astro", "Condizione SunElevation > -3, chiusura tapparelle")
-        TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
-        TapparellaStudio.sendCommand(92)
-        TapparellaSoggiorno.sendCommand(97)
-        TapparellaCameretta.sendCommand(97)
-        vTapparellastatus = 1
     }
-    if(SunElevation.state < -12 && vTapparellastatus == 1) {
-        logInfo("Rule Astro", "Condizione SunElevation < -11, reset variabile stato tapparelle")
-        vTapparellastatus = 0
-    }
-    if(SunElevation.state > 0 && FGS222_004_SwitchBinary1.state == ON) { // Spegnimento luce esterna se l'elevazione del sole è maggiore di 0 gradi
-        logInfo("Rule Astro", "Condizione SunElevation > 0, spengo luce esterna")
+
+    if(sunEl > sogliaAlbaTramonto && FGS222_004_SwitchBinary1.state == ON) {
+        logInfo("Rule Astro", "SunElevation > (" + sunEl + "°), spengo luce esterna")
         FGS222_004_SwitchBinary1.sendCommand(OFF)
-      //  vLuceEsterna = 0
     }
-    if(SunElevation.state >= 10 && SunElevation.state <= 15 && Prodino0_optoIn0.state == "DISINSERITO" && vTapparellastatus == 0){ //apertura tapparelle soggiorno e studio se l'elevazione del sole è tra 10 e 15 gradi e il prodino è disinserito
-        TapparellaSoggiorno.sendCommand(UP)
-        TapparellaStudio.sendCommand(UP)
-        vTapparellastatus = 1
+
+    // --- Chiusura tapparelle a sera ---
+    // Prodino0_optoIn0: 0 = DISINSERITO, 1 = INSERITO
+    if(sunEl < sogliaChiusuraTapparelle && allarme == 0 && flagTapparelleChiuse == 0) {
+        logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparelle")
+        TapparellaLetto.sendCommand(posTapparellaLettoNotte)
+        TapparellaStudio.sendCommand(posTapparellaStudioNotte)
+        TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoNotte)
+        TapparellaCameretta.sendCommand(posTapparellaCamerettaNotte)
+        vFlagTapparelleChiuse.postUpdate(1)
     }
-    if(SunElevation.state > 15 && vTapparellastatus == 1){ //reset variabile stato tapparelle
-        vTapparellastatus = 0
+
+    // --- Apertura tapparelle al mattino ---
+    if(sunEl >= sogliaAperturaTapparelle1 && allarme == 0 && flagTapparelleAperte == 0 && isBankHoliday == false && isWeekend == false) {
+        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparelle soggiorno e studio")
+        if (TapparellaSoggiorno.state == posTapparellaSoggiornoNotte) {
+            TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoGiorno)
+        }
+        if (TapparellaStudio.state == posTapparellaStudioNotte) {
+            TapparellaStudio.sendCommand(posTapparellaStudioGiorno)
+        }
+        vFlagTapparelleAperte.postUpdate(1)
+    }
+    // --- Apertura tenda al mattino (sole sopra soglia alta) ---
+    if(sunEl >= sogliaAperturaTenda && flagTendaAperta == 0) {
+        logInfo("Rule Astro", "SunElevation >= " + sogliaAperturaTenda + " (" + sunEl + "°), apro tenda")
+        FGR223_014_BlindsControl.sendCommand(0)      // 
+        vFlagTendaAperta.postUpdate(1)
+        vFlagTendaChiusa.postUpdate(0)
+    }
+
+    // --- Chiusura tenda al tramonto (sole sotto soglia bassa) ---
+    if(sunEl < sogliaChiusuraTenda && flagTendaChiusa == 0) {
+        logInfo("Rule Astro", "SunElevation < " + sogliaChiusuraTenda + " (" + sunEl + "°), chiudo tenda")
+        FGR223_014_BlindsControl.sendCommand(100)    // 
+        vFlagTendaChiusa.postUpdate(1)
+        vFlagTendaAperta.postUpdate(0)
+    }
+
+    // --- Reset flag apertura (sole sceso sotto soglia apertura) ---
+    if(sunEl < sogliaAperturaTenda && flagTendaAperta == 1 && sunEl >= sogliaChiusuraTenda) {
+        logInfo("Rule Astro", "SunElevation < " + sogliaAperturaTenda + " (" + sunEl + "°), reset flag apertura tenda")
+        vFlagTendaAperta.postUpdate(0)
+    }
+
+    // --- Reset flag chiusura (sole risalito sopra soglia chiusura) ---
+    if(sunEl >= sogliaChiusuraTenda && flagTendaChiusa == 1 && sunEl < sogliaAperturaTenda) {
+        logInfo("Rule Astro", "SunElevation >= " + sogliaChiusuraTenda + " (" + sunEl + "°), reset flag chiusura tenda")
+        vFlagTendaChiusa.postUpdate(0)
+    }
+
+    // --- Reset flag chiusura tapperelle---
+    if(sunEl >= sogliaChiusuraTapparelle && flagTapparelleChiuse == 1) {
+        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), reset flag chiusura tapparelle")
+        vFlagTapparelleChiuse.postUpdate(0)
+    }
+
+    // --- Reset flag apertura tapparelle---
+    if(sunEl < sogliaAperturaTapparelle && flagTapparelleAperte == 1) {
+        logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), reset flag apertura tapparelle")
+        vFlagTapparelleAperte.postUpdate(0)
     }
 end
 
@@ -124,10 +211,10 @@ then
     }
 end
 
-rule "Chiusura tenda 60 minuti prima del tramonto"
-when
-    Channel 'astro:sun:local_offset60:set#event' triggered START
-then
-    logInfo("Rule Astro", "Tenda chiusa 60 minuti prima del tramonto")
-    FGR223_014_BlindsControl.sendCommand(UP)
-end
+// rule "Chiusura tenda 60 minuti prima del tramonto"
+// when
+//     Channel 'astro:sun:local_offset60:set#event' triggered START
+// then
+//     logInfo("Rule Astro", "Tenda chiusa 60 minuti prima del tramonto")
+//     FGR223_014_BlindsControl.sendCommand(UP)
+// end

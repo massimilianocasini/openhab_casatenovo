@@ -7,3 +7,5 @@ Number:Intensity Diffuse_Radiation  "Irraggiamento diffuso [%.2f %unit%]" <sun> 
 Number:Intensity Direct_Radiation  "Irraggiamento diretto [%.2f %unit%]"  <sun> (gInfluxdb, gAstroRadation) { channel="astro:sun:local:radiation#direct" }
 Switch SunsetEvent "Evento tramonto" <sunset> {channel="astro:sun:local:set#event"}
 Switch SunriseEvent "Evento alba" <sunrise> {channel="astro:sun:local:rise#event"}
+String Stagione "Stagione [%s]" <season> {channel="astro:sun:local:season#name"}
+String FaseSolare "Fase solare [%s]" <sun> {channel="astro:sun:local:phase#name"}

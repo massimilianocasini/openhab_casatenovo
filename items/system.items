@@ -1,0 +1,5 @@
+// --- Items per  tenere in mapdb lo stato delle taparelle anche ad un eventuale reset ---
+Number vFlagTapparelleAperte  "Flag apertura tapparelle" (gMapDb) { autoupdate="false" }
+Number vFlagTapparelleChiuse  "Flag chiusura tapparelle" (gMapDb) { autoupdate="false" }
+Number vFlagTendaAperta  "Flag apertura tenda" (gMapDb) { autoupdate="false" }
+Number vFlagTendaChiusa  "Flag chiusura tenda" (gMapDb) { autoupdate="false" }

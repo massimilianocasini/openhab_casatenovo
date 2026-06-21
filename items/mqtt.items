@@ -1,8 +1,8 @@
 // Prodino
-Number  Prodino0_optoIn0    "Stato Antifurto [%s]" <alarm>  (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso1", stateDescription="" [options="1=INSERITO, 0=DISINSERITO"]}
-Number  Prodino0_optoIn1    "Allarme [%s]"         <alarm>  (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso2", stateDescription="" [options="1=ALLARME, 0=RIPOSO"]}
+Number  Prodino0_optoIn0    "Stato Antifurto [%s]" <alarm>  (gAlarmSystem)                      ["AlarmSystem"]                 {channel="mqtt:topic:cm4home:prodino:ingresso1", stateDescription="" [options="1=INSERITO, 0=DISINSERITO"]}
+Number  Prodino0_optoIn1    "Allarme [%s]"         <alarm>  (gAlarmSystem)                      ["AlarmSystem"]                 {channel="mqtt:topic:cm4home:prodino:ingresso2", stateDescription="" [options="1=ALLARME, 0=RIPOSO"]}
 Number  Prodino0_optoIn2    "Stato 220V [%s]" 	  <energy>  (gAlarmSystem)                      ["Status", "Power"]                 {channel="mqtt:topic:cm4home:prodino:ingresso3", stateDescription="" [options="1=MANCANZA, 0=PRESENTE"]}
-Number  Prodino0_optoIn3    "Anomalia [%s]"  	            (gAlarmSystem)                      ["Status", "Alarm"]                 {channel="mqtt:topic:cm4home:prodino:ingresso4", stateDescription="" [options="1=PRESENTE, 0=NESSUNA"]}
+Number  Prodino0_optoIn3    "Anomalia [%s]"  	            (gAlarmSystem)                      ["AlarmSystem"]                 {channel="mqtt:topic:cm4home:prodino:ingresso4", stateDescription="" [options="1=PRESENTE, 0=NESSUNA"]}
 Switch  Prodino0_ReleOut1   "Chiave"              <switch>  (gAlarmSystem, gMapDb, gHouseAlarm) ["Switch"]                          {ga="securitySystemArmed", channel="mqtt:topic:cm4home:prodino:output1", expire="1s,command=OFF"}
 Switch  Prodino_LWT         "Stato Prodino [%s]"            (gAlarmSystem, gMQTT)               ["Status"]                          {channel="mqtt:topic:cm4home:prodino:prodino_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
 

@@ -10,7 +10,7 @@ Number Lumi4S  "SetPoint [%.1f °C]" (gMapDb) {ga="thermostatTemperatureSetpoint
 String Lumi5M  "Term. Mode [%s]" (gMapDb) {ga="thermostatMode"}
 Number Lumi5S  "SetPoint [%.1f °C]" (gMapDb) {ga="thermostatTemperatureSetpoint"}
 
-Switch Osram01S "Presa" <switch> (gMapDb, gCorridor2PowerOutlet) ["Switch"]  {channel="deconz:onofflight:00212E065BD2:7cb03eaa0a0859f203:switch"}
+Switch Osram01S "Presa Osram" <switch> (gMapDb, gCorridor2PowerOutlet) ["Switch"]  {channel="deconz:onofflight:00212E065BD2:7cb03eaa0a0859f203:switch"}
 
 // Number:Temperature Lumi1T "Temperatura Cameretta Lumi1T [%.1f °C]" <temperature>  (gLumi1) ["Measurement", "Temperature"] {ga="thermostatTemperatureAmbient", channel="deconz:temperaturesensor:00212E065BD2:00158d000418a54c010402:temperature"}
 // Number:Dimensionless Lumi1B "Livello batteria Cameretta Lumi1B [%d %%]" <batterylevel>  (gLumi1, gBattery) ["Status", "Energy"] {channel="deconz:temperaturesensor:00212E065BD2:00158d000418a54c010402:battery_level", unit="%"}
@@ -59,6 +59,11 @@ Switch WaterSensorCucinaAcqua "Rilevazione acqua Cucina" (gWaterSensor2) ["Statu
 //Number:Temperature WaterSensorCucinaTemp "Temperatura Water Sensor Cucina [%.1f °C]" (gWaterSensor2) ["Measurement", "Temperature"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0f0d010500:temperature"}
 Number:Dimensionless WaterSensorCucinaBatt "Livello batteria WS Cucina [%d %%]" <batterylevel> (gWaterSensor2, gBattery) ["Status","Energy"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0f0d010500:battery_level", unit="%"}
 DateTime WaterSensorCucinaLastUpdate "Ultimo invio [%1$td.%1$tm.%1$tY, %1$tH:%1$tM]" (gWaterSensor2) ["Status", "Timestamp"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0f0d010500:last_updated"}
+
+Switch WaterSensorBagnoVascaAcqua "Rilevazione acqua Bagno Vasca" (gWaterSensor2) ["Status", "Water"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0eb2010500:waterleakage", stateDescription="" [options="OFF=ASCIUTTO, ON=BAGNATO"]}
+//Number:Temperature WaterSensorCucinaTemp "Temperatura Water Sensor Cucina [%.1f °C]" (gWaterSensor2) ["Measurement", "Temperature"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0f0d010500:temperature"}
+Number:Dimensionless WaterSensorBagnoVascaBatt "Livello batteria WS Cucina [%d %%]" <batterylevel> (gWaterSensor2, gBattery) ["Status","Energy"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0eb2010500:battery_level", unit="%"}
+DateTime WaterSensorBagnoVascaLastUpdate "Ultimo invio [%1$td.%1$tm.%1$tY, %1$tH:%1$tM]" (gWaterSensor2) ["Status", "Timestamp"] {channel="deconz:waterleakagesensor:00212E065BD2:00158d0005cf0eb2010500:last_updated"}
 
 Number:Temperature SonoOffT "Temperatura SONOFF [%.1f °C]" <temperature> (gCorridorTemp, gAvgTemperatura, thermostatGroup) ["Measurement", "Temperature"] {ga="thermostatTemperatureAmbient" [roomHint="Corridoio"], channel="deconz:temperaturesensor:00212E065BD2:048727fffeb07804010402:temperature"}
 Number SonoOffH "Umidità SONOFF [%.1f %%]" <humidity> (gCorridorTemp, gAvgUmidita, thermostatGroup) ["Measurement", "Humidity"] {ga="thermostatHumidityAmbient" [roomHint="Corridoio"], channel="deconz:humiditysensor:00212E065BD2:048727fffeb07804010405:humidity"}

@@ -15,3 +15,6 @@ openweathermap.*
 solaredge.*
 weather.*
 weather.*.*
+certbot/
+backup/
+nodered/

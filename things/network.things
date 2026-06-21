@@ -15,3 +15,8 @@ network:pingdevice:graziella [ hostname="192.168.188.115", retry=5, timeout=1000
 network:pingdevice:massimiliano [ hostname="192.168.188.179", retry=5, timeout=1000, refreshInterval=60000 ]
 network:pingdevice:elena [ hostname="192.168.188.138", retry=5, timeout=6000, refreshInterval=60000, useIOSWakeOnLAN=true ]
 network:pingdevice:esp32c3d1 [ hostname="192.168.188.155", retry=5, timeout=1000, refreshInterval=60000 ]
+network:pingdevice:TapparellaLettoIP [ hostname="192.168.188.160", retry=5, timeout=1000, refreshInterval=60000 ]
+network:pingdevice:TapparellaStudioIP [ hostname="192.168.188.163", retry=5, timeout=1000, refreshInterval=60000 ]
+network:pingdevice:TapparellaSoggiornoIP [ hostname="192.168.188.187", retry=5, timeout=1000, refreshInterval=60000 ]
+network:pingdevice:TapparellaCamerettaIP [ hostname="192.168.188.188", retry=5, timeout=1000, refreshInterval=60000 ]
+network:pingdevice:PresaGarageIP [ hostname="192.168.188.134", retry=5, timeout=1000, refreshInterval=60000 ]

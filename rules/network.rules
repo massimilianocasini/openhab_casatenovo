@@ -9,7 +9,7 @@ rule "Network case"
         case ON: {
             val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot") 
             //logInfo("Network-case", "Host in ON " + host.name)
-            logInfo("Network case ON", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            logInfo("Network case ON", "Valore di host.name: " + host.name + " connesso in rete " )
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
                 telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
             }
@@ -25,7 +25,7 @@ rule "Network case"
         }
         case OFF: {
             val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
-            logInfo("Network case OFF", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
+            logInfo("Network case OFF", "Valore di host.name: " + host.name + " perso dalla rete ")
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
                 telegramActions.sendTelegram("Host " + host.name + " perso dalla rete!!!!")
             }
@@ -61,7 +61,7 @@ rule "Network case"
             }
         }
         default: {
-            logInfo("Network case DEFAULT", "Caso default")
+             logInfo("Network case DEFAULT", "Caso default - item: " + host.name + " stato: " + host.state)
         }
     }
 end

@@ -92,7 +92,7 @@ Group:Switch:OR(ON,OFF)   gPresence     "gPresence" <icon_presence>
             Group gKitchen "Cucina" (gPianoterra) ["Kitchen"]
                 Group gKitchenSpeaker "Speaker Cucina" (gKitchen) ["Speaker"]
                 Group gWaterSensor2 "Presenza acqua" (gKitchen) ["Sensor"]
-                Group gKitchenPowerOutlet "Prese Cucina" (gKitchen)  ["PowerOutlet"]
+                //Group gKitchenPowerOutlet "Prese Cucina" (gKitchen)  ["PowerOutlet"]
             
             Group gGarden "Giardino" (gPianoterra) ["Garden"]
                 Group gGardenBlind "Pergotenda" (gGarden) ["Blinds"]

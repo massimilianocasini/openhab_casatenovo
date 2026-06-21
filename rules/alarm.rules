@@ -1,87 +1,92 @@
 var Timer myTimer_alarm = null
 val int timeoutMinutes = 5 // choose an appropriate value
 var alarmcount = 0 //Conteggio numero di allarmi
-var receiptRete = null
-var receiptAllarme = null
+var String receiptRete = null
+var String receiptAllarme = null
+
 rule "Antifurto cambio stato swicth case"
-when 
+  when 
     Item Prodino0_optoIn0 changed
-then
-val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+  then
+    val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
 
-switch(Prodino0_optoIn0.state.toString) {
-  case  "1" : { //Antifurto inserito
-    if(myTimer_alarm === null) {
-      myTimer_alarm = createTimer(now.plusMinutes(timeoutMinutes ), [|
-      myTimer_alarm = null
-      logInfo("Alarm.rules", "Timer su inserimento scaduto, da ora un disinserimento farà riaprire le serrande" )
-      ])
-    }
-    else {
-        myTimer_alarm.reschedule(now.plusMinutes(timeoutMinutes ))
-    }
-    telegramActions.sendTelegram("Antifurto INSerito!")
-    logInfo("Alarm.rules", "Antifurto INSERITO")
-    FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
-    SonosEraStudio_Control.sendCommand(PAUSE) //Spegni Sonos Studio
-    SonosEraLetto_Control.sendCommand(PAUSE) //Spegni Sonos Letto
-    SonosBeam_Control.sendCommand(PAUSE) //Spegni Sonos Beam
-    FGD211_003_SwitchDimmer.sendCommand(0) //Spegni luce corridoio
-
-    if (DaikinACUnit_Mode_Studio.state == "HEAT" && DaikinACUnit_Power_Studio.state == ON) {
-        DaikinACUnit_Power_Studio.sendCommand(OFF)
-        telegramActions.sendTelegram("Condizionatore Studio spento")
-        logInfo("Alarm.rules", "Condizionatore Studio spento" )
-    }
-    if (DaikinACUnit_Mode_Soggiorno.state == "HEAT" && DaikinACUnit_Power_Soggiorno.state == ON) {
-        DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
-        telegramActions.sendTelegram("Condizionatore Soggiorno spento")
-    }
-    if (DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON) {
-        DaikinACUnit_Power_Cameretta.sendCommand(OFF)
-        telegramActions.sendTelegram("Condizionatore Cameretta spento")
-    }
-    if (DaikinACUnit_Mode_Letto.state == "HEAT" && DaikinACUnit_Power_Letto.state == ON) {
-        DaikinACUnit_Power_Letto.sendCommand(OFF)
-        telegramActions.sendTelegram("Condizionatore Letto spento")
-    }
-    if (!(now.hour >= 1 && now.hour < 3)) { // Non chiudere le tapparelle se è notte fonda per evitare di svegliare qualcuno
-        TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
-        TapparellaStudio.sendCommand(92)
-        TapparellaSoggiorno.sendCommand(97)
-        TapparellaCameretta.sendCommand(97)
-        logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.hour )
-        Osram01S.sendCommand(OFF) //Spegni luce natale
+    switch(Prodino0_optoIn0.state.toString) {
+      case  "1" : { //Antifurto inserito
+        if(myTimer_alarm === null) {
+          myTimer_alarm = createTimer(now.plusMinutes(timeoutMinutes ), [|
+          myTimer_alarm = null
+          logInfo("Alarm.rules", "Timer su inserimento scaduto, da ora un disinserimento farà riaprire le serrande" )
+          ])
+        }
+        else {
+          myTimer_alarm.reschedule(now.plusMinutes(timeoutMinutes ))
+        }
+        telegramActions.sendTelegram("Antifurto INSerito!")
+        logInfo("Alarm.rules", "Antifurto INSERITO")
         FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
+        SonosEraStudio_Control.sendCommand(PAUSE) //Spegni Sonos Studio
+        SonosEraLetto_Control.sendCommand(PAUSE) //Spegni Sonos Letto
+        SonosBeam_Control.sendCommand(PAUSE) //Spegni Sonos Beam
+        FGD211_003_SwitchDimmer.sendCommand(0) //Spegni luce corridoio
+
+        if (DaikinACUnit_Mode_Studio.state == "HEAT" && DaikinACUnit_Power_Studio.state == ON) {
+              DaikinACUnit_Power_Studio.sendCommand(OFF)
+              telegramActions.sendTelegram("Condizionatore Studio spento")
+              logInfo("Alarm.rules", "Condizionatore Studio spento" )
+        }
+        if (DaikinACUnit_Mode_Soggiorno.state == "HEAT" && DaikinACUnit_Power_Soggiorno.state == ON) {
+              DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
+              telegramActions.sendTelegram("Condizionatore Soggiorno spento")
+        }
+        if (DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON) {
+              DaikinACUnit_Power_Cameretta.sendCommand(OFF)
+              telegramActions.sendTelegram("Condizionatore Cameretta spento")
+        }
+        if (DaikinACUnit_Mode_Letto.state == "HEAT" && DaikinACUnit_Power_Letto.state == ON) {
+              DaikinACUnit_Power_Letto.sendCommand(OFF)
+              telegramActions.sendTelegram("Condizionatore Letto spento")
+        }
+        if (!(now.hour >= 1 && now.hour < 3)) { // Non chiudere le tapparelle se è notte fonda per evitare di svegliare qualcuno
+              TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
+              TapparellaStudio.sendCommand(92)
+              TapparellaSoggiorno.sendCommand(97)
+              TapparellaCameretta.sendCommand(97)
+              logInfo("Alarm.rules", "Tapparelle DOWN perchè INSERITO ad orario: " + now.hour )
+              vFlagTapparellachiusi.postUpdate(1)
+              logInfo("Alarm.rules", "Flag chiusura tapparelle impostato da regola antifurto")
+              Osram01S.sendCommand(OFF) //Spegni luce natale
+              FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
+        }
+        else {
+              logInfo("Alarm.rules", "Tapparelle NON chiuse perchè INSERITO ad orario: " + now.hour )
+        }
+      }
+      case "0": { //Antifurto disinserito
+        telegramActions.sendTelegram("Antifurto DIsInserito!")
+        logInfo("Alarm.rules", "Antifurto DISINSERITO")
+        // Osram01S.sendCommand(ON) //Accendi luce natale
+        // Se disinserito entro 5 min dall'inserimento: non aprire tapparelle, solo luce corridoio
+          if (myTimer_alarm !== null) {
+            myTimer_alarm.cancel()
+            myTimer_alarm = null
+            FGD211_003_SwitchDimmer.sendCommand(60)
+            logInfo("Alarm.rules", "Luce corridoio ON: disinserito entro 5 min dall'inserimento")
+          }
+          else if ((SunElevation.state as Number).floatValue >= -10 && now.hour > 8) {
+            // Timer scaduto o mai attivo: apri tapparelle se c'è luce
+            TapparellaLetto.sendCommand(UP)
+            TapparellaStudio.sendCommand(UP)
+            TapparellaSoggiorno.sendCommand(UP)
+            TapparellaCameretta.sendCommand(UP)
+            vFlagTapparellachiusi.postUpdate(0)
+            logInfo("Alarm.rules", "Reset flag chiusura tapparelle dopo disinserimento")
+          }
+                    //  if (now.hour > 13 && now.hour <=23  ) {
+                        // FGS221_016_SwitchBinary2.sendCommand(ON)
+                        // logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.hour )
+                    // }
+      }
     }
-    else {
-        logInfo("Alarm.rules", "Tapparelle NON chiuse perchè INSERITO ad orario: " + now.hour )
-    }
-  }
-  case "0": { //Antifurto disinserito
-    telegramActions.sendTelegram("Antifurto DIsInserito!")
-    logInfo("Alarm.rules", "Antifurto DISINSERITO")
-   // Osram01S.sendCommand(ON) //Accendi luce natale
-    // Se disinserito entro 5 min dall'inserimento: non aprire tapparelle, solo luce corridoio
-    if (myTimer_alarm !== null) {
-    myTimer_alarm.cancel()
-    myTimer_alarm = null
-    FGD211_003_SwitchDimmer.sendCommand(60)
-    logInfo("Alarm.rules", "Luce corridoio ON: disinserito entro 5 min dall'inserimento")
-  }
-    else if (SunElevation.state >= -10 && now.hour > 8) {
-    // Timer scaduto o mai attivo: apri tapparelle se c'è luce
-    TapparellaLetto.sendCommand(UP)
-    TapparellaStudio.sendCommand(UP)
-    TapparellaSoggiorno.sendCommand(UP)
-    TapparellaCameretta.sendCommand(UP)
-  }
-  //  if (now.hour > 13 && now.hour <=23  ) {
-       // FGS221_016_SwitchBinary2.sendCommand(ON)
-       // logInfo("Alarm.rules", "Presa1 Soggiorno ON perchè DISINSERITO ad orario: " + now.hour )
-   // }
-  }
-}
 end
 
 rule "Allarme antifurto"
