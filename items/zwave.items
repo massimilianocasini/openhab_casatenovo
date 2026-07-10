@@ -70,7 +70,10 @@ Switch FGBS222_013_Input2 "IR Corridoio" <motion> (gCorridorMotionDetector) ["St
 Rollershutter FGR223_014_BlindsControl "Pergotenda [%d %%]" <rollershutter> (gGardenBlind) ["OpenState"] {channel="zwave:device:1f2db33fb0:node14:blinds_control1"}
 Number:Power FGR223_014_MeterWatts  "Potenza istantanea"{channel="zwave:device:1f2db33fb0:node14:meter_watts1"}
 Number:Energy FGR223_014_MeterKwh  "Energia consumata"  {channel="zwave:device:1f2db33fb0:node14:meter_kwh1"}
-
+//Flag stato Pergotenda (persistiti su mapdb)
+Switch vFlagTendaAperta  "Pergotenda aperta" (gMapDb) ["Status"]
+Switch vFlagTendaChiusa  "Pergotenda chiusa" (gMapDb) ["Status"]
+Number FGR223_014_BlindsControl_Inv "Pergotenda - % aperta"
 
 //WPS104 Energy Driven Switch C, Scaldabagno
 Switch WPS104_015_SwitchBinary "Switch esterno"  {channel="zwave:device:1f2db33fb0:node15:switch_binary"}
