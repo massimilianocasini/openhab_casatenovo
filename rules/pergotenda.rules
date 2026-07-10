@@ -1,0 +1,73 @@
+val Number SOGLIA_APERTA = 5   // <=5% = telo disteso, esposto al sole
+val Number SOGLIA_CHIUSA = 95  // >=95% = telo avvolto nel cassonetto
+
+rule "Pergotenda - stato derivato con isteresi"
+when
+    Item FGR223_014_BlindsControl changed
+then
+    val pos = (FGR223_014_BlindsControl.state as PercentType).intValue
+    val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+
+    if (pos <= SOGLIA_APERTA && vFlagTendaAperta.state != ON) {
+        vFlagTendaAperta.postUpdate(ON)
+        vFlagTendaChiusa.postUpdate(OFF)
+        telegramActions.sendTelegram("Pergotenda aperta, telo esposto al sole (" + pos + "%%)")
+    } else if (pos >= SOGLIA_CHIUSA && vFlagTendaChiusa.state != ON) {
+        vFlagTendaChiusa.postUpdate(ON)
+        vFlagTendaAperta.postUpdate(OFF)
+        telegramActions.sendTelegram("Pergotenda chiusa, telo avvolto (" + pos + "%%)")
+    } else if (pos > SOGLIA_APERTA && pos < SOGLIA_CHIUSA) {
+        vFlagTendaAperta.postUpdate(OFF)
+        vFlagTendaChiusa.postUpdate(OFF)
+    }
+end
+
+rule "Pergotenda - sync iniziale slider invertito"
+when
+    System started
+then
+    if (FGR223_014_BlindsControl.state instanceof PercentType) {
+        val pos = (FGR223_014_BlindsControl.state as PercentType).intValue
+        FGR223_014_BlindsControl_Inv.postUpdate(100 - pos)
+    }
+end
+
+rule "Pergotenda - sincronizza slider invertito (stato)"
+when
+    Item FGR223_014_BlindsControl changed
+then
+    val pos = (FGR223_014_BlindsControl.state as PercentType).intValue
+    FGR223_014_BlindsControl_Inv.postUpdate(100 - pos)
+end
+
+rule "Pergotenda - comando da slider invertito"
+when
+    Item FGR223_014_BlindsControl_Inv received command
+then
+    val invPos = (receivedCommand as DecimalType).intValue
+    FGR223_014_BlindsControl.sendCommand(100 - invPos)
+end
+
+//Non funziona da verificare
+// rule "Pergotenda - ricalibrazione periodica motore"
+// when
+//     Time cron "0 10 8 10 * ?"
+// then
+//     val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+//     val String thingUID = "zwave:device:1f2db33fb0:node14"
+//     val String url = "http://localhost:8080/rest/things/" + thingUID + "/config"
+//     val String body = '{"config_150_1": 2}'
+//     val headers = newHashMap("Authorization" -> "Bearer oh.pergotenda.VqIFInCiBUeg5qjqCFPGTqcE7L1DPLDrDh6PoOJffr1W4oWwtKTjI6kNXPrXphqSutLrVlbI5oG7phULkOVfg", "Accept" -> "application/json")
+
+//     logInfo("Pergotenda", "Avvio ricalibrazione motore FGR223 (parametro 150 = 2)")
+
+//     val String risposta = sendHttpPutRequest(url, "application/json", body, headers, 10000)
+
+//     if (risposta === null || risposta.toLowerCase.contains("error") || risposta.toLowerCase.contains("exception")) {
+//         logError("Pergotenda", "Ricalibrazione fallita. Risposta: " + risposta)
+//         telegramActions.sendTelegram("Errore: ricalibrazione pergotenda non avviata. Dettaglio: " + risposta)
+//     } else {
+//         logInfo("Pergotenda", "Ricalibrazione inviata correttamente. Risposta REST: " + risposta)
+//         telegramActions.sendTelegram("Ricalibrazione motore pergotenda avviata: ciclo completo salita/discesa/salita in corso")
+//     }
+// end
