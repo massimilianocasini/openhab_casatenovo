@@ -21,7 +21,9 @@ rule "Antifurto cambio stato swicth case"
         else {
           myTimer_alarm.reschedule(now.plusMinutes(timeoutMinutes ))
         }
-        telegramActions.sendTelegram("Antifurto INSerito!")
+        if (telegramActions !== null) {
+          telegramActions.sendTelegram("Antifurto INSerito!")
+        }
         sendNotification("massimiliano.casini@gmail.com", "Antifurto INSerito")
         logInfo("Alarm.rules", "Antifurto INSERITO")
         FGS221_016_SwitchBinary2.sendCommand(OFF) //Spegni presa1 soggiorno
@@ -32,20 +34,28 @@ rule "Antifurto cambio stato swicth case"
 
         if (DaikinACUnit_Mode_Studio.state == "HEAT" && DaikinACUnit_Power_Studio.state == ON) {
               DaikinACUnit_Power_Studio.sendCommand(OFF)
-              telegramActions.sendTelegram("Condizionatore Studio spento")
+              if (telegramActions !== null) {
+                telegramActions.sendTelegram("Condizionatore Studio spento")
+              }
               logInfo("Alarm.rules", "Condizionatore Studio spento" )
         }
         if (DaikinACUnit_Mode_Soggiorno.state == "HEAT" && DaikinACUnit_Power_Soggiorno.state == ON) {
               DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
-              telegramActions.sendTelegram("Condizionatore Soggiorno spento")
+              if (telegramActions !== null) {
+                telegramActions.sendTelegram("Condizionatore Soggiorno spento")
+              }
         }
         if (DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON) {
               DaikinACUnit_Power_Cameretta.sendCommand(OFF)
-              telegramActions.sendTelegram("Condizionatore Cameretta spento")
+              if (telegramActions !== null) {
+                telegramActions.sendTelegram("Condizionatore Cameretta spento")
+              }
         }
         if (DaikinACUnit_Mode_Letto.state == "HEAT" && DaikinACUnit_Power_Letto.state == ON) {
               DaikinACUnit_Power_Letto.sendCommand(OFF)
-              telegramActions.sendTelegram("Condizionatore Letto spento")
+              if (telegramActions !== null) {
+                telegramActions.sendTelegram("Condizionatore Letto spento")
+              }
         }
         if (!(now.hour >= 1 && now.hour < 3)) { // Non chiudere le tapparelle se è notte fonda per evitare di svegliare qualcuno
               TapparellaLetto.sendCommand(92) //Chiudi a 90% le tapparelle per far passare un po di luce
@@ -62,7 +72,9 @@ rule "Antifurto cambio stato swicth case"
         }
       }
       case "0": { //Antifurto disinserito
-        telegramActions.sendTelegram("Antifurto DISInserito!")
+        if (telegramActions !== null) {
+          telegramActions.sendTelegram("Antifurto DISInserito!")
+        }
         sendNotification("massimiliano.casini@gmail.com", "Antifurto DISInserito")
         logInfo("Alarm.rules", "Antifurto DISINSERITO")
         // Osram01S.sendCommand(ON) //Accendi luce natale
@@ -99,14 +111,18 @@ then
   if((Prodino0_optoIn1.state as Number) == 1) { 
     alarmcount = 1
     receiptAllarme = pushoverActions.sendPriorityMessage("Allarme antifurto", "openhab3", 2)
-    telegramActions.sendTelegram("Allarme antifurto")
+    if (telegramActions !== null) {
+      telegramActions.sendTelegram("Allarme antifurto")
+    }
     sendNotification("massimiliano.casini@gmail.com", "Antifurto Allarme")
 
   }
   else if ((Prodino0_optoIn1.state as Number) == 0) {
     if (alarmcount == 1) {
         pushoverActions.sendMessage("FINE Allarme antifurto", "openhab3")
-        telegramActions.sendTelegram("FINE Allarme antifurto")
+        if (telegramActions !== null) {
+          telegramActions.sendTelegram("FINE Allarme antifurto")
+        }
         alarmcount = 0
     }
     // Cancella il messaggio priority SOLO quando l'allarme finisce
@@ -127,11 +143,15 @@ then
         logInfo("Alarm.rules", "Mancanza 220V rilevata") 
         receiptRete = pushoverActions.sendPriorityMessage("Mancanza 220V", "openhab3", 2)
         sendNotification("massimiliano.casini@gmail.com", "Mancanza rete 220V")
-        telegramActions.sendTelegram("Mancanza 220V")
+        if (telegramActions !== null) {
+          telegramActions.sendTelegram("Mancanza 220V")
+        }
     }
   else if ((Prodino0_optoIn2.state as Number) == 0) { // Ripristino 220V
         logInfo("Alarm.rules", "Ripristino 220V")  
-        telegramActions.sendTelegram("Ripristino 220V")
+        if (telegramActions !== null) {
+          telegramActions.sendTelegram("Ripristino 220V")
+        }
         pushoverActions.sendMessage("Ripristino 220V", "openhab3")
         sendNotification("massimiliano.casini@gmail.com", "Ripristino rete 220V")
         // Cancella il messaggio priority SOLO quando l'allarme finisce

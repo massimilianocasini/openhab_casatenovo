@@ -5,9 +5,11 @@ then
     if(FGBS001_007_SensorBinary1.state == ON) {
     val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
     val lgwebosActions = getActions("lgwebos","lgwebos:WebOSTV:d19b82c8-a123-40fe-c940-70169a605dc6")
-    telegramActions.sendTelegram("Garage Serranda Aperta")
+    if (telegramActions !== null) {
+      telegramActions.sendTelegram("Garage Serranda Aperta")
+    }
     sendNotification("massimiliano.casini@gmail.com", "Garage Serranda Aperta")
-    if (LG_TV0_Power==ON) {
+    if (LG_TV0_Power==ON && lgwebosActions !== null) {
         lgwebosActions.showToast("Garage Serranda Aperta")
     }
   //  Sonos_Volume.sendCommand(30)
@@ -25,9 +27,11 @@ then
 else {
     val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
     val lgwebosActions = getActions("lgwebos","lgwebos:WebOSTV:d19b82c8-a123-40fe-c940-70169a605dc6")
-    telegramActions.sendTelegram("Garage Serranda Chiusa")
+    if (telegramActions !== null) {
+      telegramActions.sendTelegram("Garage Serranda Chiusa")
+    }
     sendNotification("massimiliano.casini@gmail.com", "Garage Serranda Chiusa")
-    if (LG_TV0_Power==ON) {
+    if (LG_TV0_Power==ON && lgwebosActions !== null) {
     lgwebosActions.showToast("Garage Serranda Chiusa")  
     }
 }

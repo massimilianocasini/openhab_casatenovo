@@ -1,0 +1,34 @@
+// washer
+Switch                 Lavatrice_PowerState                                  "Power State"                        {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:power_state"}
+Contact                Lavatrice_DoorState                                   "Door State"                         {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:door_state"}
+String                 Lavatrice_OperationState                              "Operation State"                    {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:operation_state"}
+Switch                 Lavatrice_RemoteStartAllowanceState                   "Remote Start Allowance State"       {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:remote_start_allowance_state"}
+Switch                 Lavatrice_RemoteControlActiveState                    "Remote Control Activation State"    {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:remote_control_active_state"}
+Switch                 Lavatrice_LocalControlActiveState                     "Local Control Active State"         {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:local_control_active_state"}  
+
+String                 Lavatrice_SelectedProgramState                        "Selected Program"                   {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:selected_program_state"}
+
+String                 Lavatrice_ActiveProgramState                          "Active Program"                     {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:active_program_state"}
+
+Number:Time            Lavatrice_RemainingProgramTimeState                   "Remaining Program Time"             {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:remaining_program_time_state"}
+Number:Dimensionless   Lavatrice_ProgramProgressState                        "Progress State"                     {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:program_progress_state"}
+
+String                 Lavatrice_LaundryCareWasherTemperature                "Temperature"                        {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_temperature"}
+
+String                 Lavatrice_LaundryCareWasherSpinSpeed                  "Spin Speed"                         {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_spin_speed"}
+String                  Lavatrice_DryingTarget                                "Drying target"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:dryer_drying_target"}
+String                  Lavatrice_ProgramAction                                 "Basic Control"                    {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:basic_actions_state"}
+// String                 Lavatrice_LaundryCareWasherIdos1Level                 "i-Dos 1 Level"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_idos1_level"}
+// String                 Lavatrice_LaundryCareWasherIdos2Level                 "i-Dos 2 Level"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_idos2_level"}
+// Switch                 Lavatrice_LaundryCareWasherIdos1                      "i-Dos 1 State"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_idos1"}
+// Switch                 Lavatrice_LaundryCareWasherIdos2                      "i-Dos 2 State"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_idos2"}
+// Switch                 Lavatrice_LaundryCareWasherVarioPerfect               "Vario Perfect State"                {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_vario_perfect"}
+// Switch                 Lavatrice_LaundryCareWasherLessIroning                "Ironing State"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_less_ironing"}
+// Switch                 Lavatrice_LaundryCareWasherPreWash                    "Prewash State"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_pre_wash"}
+// String                 Lavatrice_LaundryCareWasherRinsePlus                  "Amount Additional Rinses"           {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_rinse_plus"}
+// Switch                 Lavatrice_LaundryCareWasherRinseHold                  "Spin Hold"                          {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_rinse_hold"}
+// Switch                 Lavatrice_LaundryCareWasherSoak                       "Soaking State"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_soak"}
+// Number:Mass            Lavatrice_LaundryCareWasherLoadRecommendation         "Load Recommendation"                {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:laundry_care_washer_load_recommendation"}
+// Number:Dimensionless   Lavatrice_ProgramEnergy                               "Estimated Energy Consumption"       {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:program_energy"}
+// Number:Dimensionless   Lavatrice_ProgramWater                                "Estimated Water Consumption"        {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:program_water"}
+// String                 Lavatrice_BasicActionsState                           "Basic Control"                      {channel="homeconnect:washerdryer:api_bridge_at_home:lavatrice:basic_actions_state"}

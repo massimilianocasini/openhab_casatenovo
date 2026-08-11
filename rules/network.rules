@@ -11,14 +11,18 @@ rule "Network case"
             //logInfo("Network-case", "Host in ON " + host.name)
             logInfo("Network case ON", "Valore di host.name: " + host.name + " connesso in rete " )
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
-                telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+                if (telegramActions !== null) {
+                  telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+                }
             }
             else if (host.name == "Nginx_443") { //Se l'host che è andato ON è nginx spegni il timer_ritardo_nginx
                     timer_ritardo_nginx?.cancel()
                     timer_ritardo_nginx = null
                     logInfo("Network case ON", "NGINX connesso (ON), timer_ritardo_nginx spento")
                     if (stato_nginx == 0) { //invia l'evento solo se il timer_ritardo_nginx era terminato con esecuzione
-                        telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+                        if (telegramActions !== null) {
+                          telegramActions.sendTelegram("Host " + host.name + " connesso in rete")
+                        }
                         stato_nginx = 1
                     }
             }
@@ -27,14 +31,18 @@ rule "Network case"
             val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
             logInfo("Network case OFF", "Valore di host.name: " + host.name + " perso dalla rete ")
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
-                telegramActions.sendTelegram("Host " + host.name + " perso dalla rete!!!!")
+                if (telegramActions !== null) {
+                  telegramActions.sendTelegram("Host " + host.name + " perso dalla rete!!!!")
+                }
             }
             else if (host.name == "Nginx_443") {
                 logInfo("Network case OFF", "NGINX perso dalla rete (OFF), Parte timer_ritardo_nginx 30min")
                 if (timer_ritardo_nginx === null) {
                     timer_ritardo_nginx = createTimer(now.plusMinutes(30), [|
                     val tgActions = getActions("telegram", "telegram:telegramBot:Telegram_Bot")
-                    tgActions.sendTelegram("Host " + host.name + " perso dalla rete da oltre 30 minuti!")
+                    if (tgActions !== null) {
+                      tgActions.sendTelegram("Host " + host.name + " perso dalla rete da oltre 30 minuti!")
+                    }
                     stato_nginx = 0
                     ])
                 }

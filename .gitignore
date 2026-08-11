@@ -9,6 +9,7 @@ things/pushover.*
 things/telegram.*
 things/openweathermap.*
 things/solaredge.*
+things/homeconnect.things
 pushover.*
 telegram.*
 openweathermap.*

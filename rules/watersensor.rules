@@ -24,7 +24,9 @@ if (host.state==ON) {
             receipt = null
         }
         val telegramAction = getActions("telegram","telegram:telegramBot:Telegram_Bot")
-        telegramAction.sendTelegram("Rilevata acqua sensore " + host.name)
+        if (telegramAction !== null) {
+          telegramAction.sendTelegram("Rilevata acqua sensore " + host.name)
+        }
         ElettrovalvolaAcqua.sendCommand(ON)
         logInfo("WaterSensor", "Elettrovalvola ON")
     }
