@@ -13,6 +13,6 @@ Number:Energy            M_Total_Real_Energy_Imported          "Energia importat
 Number:Power             M_AC_Real_Power_Value_Fase_A          "Potenza reale fase A [%.1f kW]"                                                                                      {unit="kW", channel="modbus:meter-wye-phase:bridge:40188:acPhaseA#ac-real-power"}
 Number:Power             Power_Used                            "Potenza richiesta [%.1f kW]"                       <poweroutlet_eu> (gInverter, gInfluxdb) ["Measurement", "Power"]  {unit="kW"}
 Number:Power             Power_Teoric_Available                "Potenza teorica disponibile [%.1f kW]"             <sun>            (gInverter, gInfluxdb) ["Measurement", "Power"]  {unit="kW"}
-Number:Power             PotenzaAssorbitaDaRete                "Potenza Assorbita da rete [%.1f kW]"                 (gInfluxdb)                                                      {unit="kW"}
-Number:Power             PotenzaImmessaInRete                  "Potenza Immessa in rete [%.1f kW]"                                                                                    {unit="kW"}
-Number:Power             PotenzaAutoconsumo                    "Potenza autoconsumo [%.1f kW]"                                                                                        {unit="kW"} 
+Number:Power             PotenzaAssorbitaDaRete                "Potenza Assorbita da rete [%.1f kW]"                 (gInfluxdb)                  ["Measurement", "Power"]           {unit="kW"}
+Number:Power             PotenzaImmessaInRete                  "Potenza Immessa in rete [%.1f kW]"                                                ["Measurement", "Power"]           {unit="kW"}
+Number:Power             PotenzaAutoconsumo                    "Potenza autoconsumo [%.1f kW]"                                                   ["Measurement", "Power"]            {unit="kW"} 
