@@ -19,3 +19,4 @@ weather.*.*
 certbot/
 backup/
 nodered/
+.claude/
