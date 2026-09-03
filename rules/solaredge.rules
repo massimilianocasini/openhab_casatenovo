@@ -57,7 +57,7 @@ then
             DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
         }
         else if (realPowerAbs > 4.5 && realPowerAbs <= 5.5) { //Soglia di assorbimento da rete superata, invio avviso
-            if (myTimer_solaredge !== null) {                                                         //se il timer è partito non fai nulla 
+            if (myTimer_solaredge !== null) {                                       //se il timer è partito non fai nulla 
                 logInfo("rules solaredge", "Il Timer assorbimento è già partito non fare nulla. Assorbimento attuale:  " + realPowerAbs)
                 // myTimer_solaredge.reschedule(now.plusMinutes(1))
             }
