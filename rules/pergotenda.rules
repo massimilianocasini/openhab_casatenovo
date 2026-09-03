@@ -12,13 +12,13 @@ then
         vFlagTendaAperta.postUpdate(ON)
         vFlagTendaChiusa.postUpdate(OFF)
         if (telegramActions !== null) {
-          telegramActions.sendTelegram("Pergotenda aperta, telo esposto al sole (" + pos + "%%)")
+          telegramActions.sendTelegram("Pergotenda chiusa, telo avvolto (" + pos + "%%)")
         }
     } else if (pos >= SOGLIA_CHIUSA && vFlagTendaChiusa.state != ON) {
         vFlagTendaChiusa.postUpdate(ON)
         vFlagTendaAperta.postUpdate(OFF)
         if (telegramActions !== null) {
-          telegramActions.sendTelegram("Pergotenda chiusa, telo avvolto (" + pos + "%%)")
+          telegramActions.sendTelegram("Pergotenda aperta, telo esposto al sole (" + pos + "%%)")
         }
     } else if (pos > SOGLIA_APERTA && pos < SOGLIA_CHIUSA) {
         vFlagTendaAperta.postUpdate(OFF)

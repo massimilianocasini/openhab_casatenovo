@@ -20,3 +20,4 @@ certbot/
 backup/
 nodered/
 .claude/
+automation/
