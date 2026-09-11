@@ -6,7 +6,7 @@ when
     Item FGR223_014_BlindsControl changed
 then
     val pos = (FGR223_014_BlindsControl.state as PercentType).intValue
-    val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+    val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
 
     if (pos <= SOGLIA_APERTA && vFlagTendaAperta.state != ON) {
         vFlagTendaAperta.postUpdate(ON)

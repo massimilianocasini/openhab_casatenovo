@@ -1,7 +1,0 @@
-// --- Items per  tenere in mapdb lo stato delle taparelle anche ad un eventuale reset ---
-Number vFlagTapparelleAperte  "Flag apertura tapparelle" (gMapDb) { autoupdate="false" }
-Number vFlagTapparelleChiuse  "Flag chiusura tapparelle" (gMapDb) { autoupdate="false" }
-Switch vTendaComandoAutomatico          "Comando automatico tenda"      
-Switch vTendaOverrideManuale            "Override manuale tenda"        <mapdb>
-Switch vTapparelleComandoAutomatico     "Comando automatico tapparelle" 
-Switch vTapparelleOverrideManuale       "Override manuale tapparelle"   <mapdb>

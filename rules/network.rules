@@ -7,7 +7,7 @@ rule "Network case"
     val host = triggeringItem
     switch(host.state) {
         case ON: {
-            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot") 
+            val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo") 
             //logInfo("Network-case", "Host in ON " + host.name)
             logInfo("Network case ON", "Valore di host.name: " + host.name + " connesso in rete " )
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
@@ -28,7 +28,7 @@ rule "Network case"
             }
         }
         case OFF: {
-            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+            val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
             logInfo("Network case OFF", "Valore di host.name: " + host.name + " perso dalla rete ")
             if (host.name != "Alice" && host.name != "Graziella" && host.name != "Massimiliano" && host.name != "Nginx_443") {
                 if (telegramActions !== null) {
@@ -39,7 +39,7 @@ rule "Network case"
                 logInfo("Network case OFF", "NGINX perso dalla rete (OFF), Parte timer_ritardo_nginx 30min")
                 if (timer_ritardo_nginx === null) {
                     timer_ritardo_nginx = createTimer(now.plusMinutes(30), [|
-                    val tgActions = getActions("telegram", "telegram:telegramBot:Telegram_Bot")
+                    val tgActions = getActions("telegram", "telegram:telegramBot:casatenovo")
                     if (tgActions !== null) {
                       tgActions.sendTelegram("Host " + host.name + " perso dalla rete da oltre 30 minuti!")
                     }

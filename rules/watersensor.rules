@@ -23,7 +23,7 @@ if (host.state==ON) {
             pushoverActions.cancelPriorityMessage(receipt)
             receipt = null
         }
-        val telegramAction = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+        val telegramAction = getActions("telegram","telegram:telegramBot:casatenovo")
         if (telegramAction !== null) {
           telegramAction.sendTelegram("Rilevata acqua sensore " + host.name)
         }

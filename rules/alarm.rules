@@ -4,14 +4,14 @@ var alarmcount = 0 //Conteggio numero di allarmi
 var String receiptRete = null
 var String receiptAllarme = null
 
-rule "Antifurto cambio stato swicth case"
+rule "Antifurto cambio stato switch case"
   when 
     Item Prodino0_optoIn0 changed
   then
-    val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+    val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
 
     switch(Prodino0_optoIn0.state.toString) {
-      case  "1" : { //Antifurto inserito
+      case  "1" : {                                                 //Antifurto inserito
         if(myTimer_alarm === null) {
           myTimer_alarm = createTimer(now.plusMinutes(timeoutMinutes ), [|
           myTimer_alarm = null
@@ -106,7 +106,7 @@ when
     Item Prodino0_optoIn1 changed
 then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
-  val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+  val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
  
   if((Prodino0_optoIn1.state as Number) == 1) { 
     alarmcount = 1
@@ -138,7 +138,7 @@ when
     Item Prodino0_optoIn2 changed
 then
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
-  val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+  val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
   if ((Prodino0_optoIn2.state as Number) == 1) {      // Mancanza 220V
         logInfo("Alarm.rules", "Mancanza 220V rilevata") 
         receiptRete = pushoverActions.sendPriorityMessage("Mancanza 220V", "openhab3", 2)

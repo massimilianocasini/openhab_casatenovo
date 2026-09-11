@@ -33,3 +33,12 @@ Dimmer TapparellaCamerettaPosition "Tapparella Cameretta posizione" (gBedroom2Bl
 Switch Presa1GarageSwitch "Presa Garage 1" (gGaragePowerOut) ["Switch"] {channel="shelly:shelly1mini:5432046b4d7c:relay#output"}
 Number:Dimensionless Presa1GarageSignal "Presa Garage 1 Segnale" (gGaragePowerOut) ["Measurement", "Level"] {channel="shelly:shelly1mini:5432046b4d7c:device#wifiSignal"}
 Number:Temperature Presa1GarageTemperature "Presa Garage 1 Temperatura" (gGaragePowerOut) ["Measurement", "Temperature"] {channel="shelly:shelly1mini:5432046b4d7c:device#internalTemp"}
+
+Switch vTapparelleComandoAutomatico     "Comando automatico tapparelle" 
+Switch vTapparelleOverrideManuale       "Override manuale tapparelle"   <mapdb>
+Number vFlagTapparelleAperte  "Flag apertura tapparelle" (gMapDb) { autoupdate="false" }
+Number vFlagTapparelleChiuse  "Flag chiusura tapparelle" (gMapDb) { autoupdate="false" }
+Switch vTapparellaLettoAuto        "Comando automatico Letto"      
+Switch vTapparellaStudioAuto       "Comando automatico Studio"      
+Switch vTapparellaSoggiornoAuto    "Comando automatico Soggiorno"   
+Switch vTapparellaCamerettaAuto    "Comando automatico Cameretta"   

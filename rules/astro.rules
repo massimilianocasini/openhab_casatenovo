@@ -9,178 +9,192 @@ then
     }
         // --- Valori configurabili ---
     val int sogliaAlbaTramonto = 0
-    val int sogliaChiusuraTapparelle    = -10 //Soglia per chiudere e resettare variabile tapparelle
-    val int sogliaAperturaTapparelle    = 10 //Soglia per aprire e resettare variabile tapparelle
-    val int sogliaAperturaTapparelle1   = 20 //Soglia usata per aprire tapparelle Studio e Soggiorno
-    val int sogliaAperturaTenda         = 15 //Soglia usata per aprire tenda al mattino
-    val int sogliaChiusuraTenda         = 10 //Soglia usata per resettare variabile chiusura tenda
+    val int sogliaChiusuraTapparelle    = -10
+    val int sogliaAperturaTapparelle    = 10
+    val int sogliaAperturaTapparelle1   = 20
+    val int sogliaAperturaTenda         = 15
+    val int sogliaChiusuraTenda         = 10
     val int posTapparellaLettoNotte     = 92
     val int posTapparellaStudioNotte    = 92
     val int posTapparellaSoggiornoNotte = 97
     val int posTapparellaCamerettaNotte = 97
-//    val int posTapparellaLettoGiorno     = 50
     val int posTapparellaStudioGiorno    = 50
     val int posTapparellaSoggiornoGiorno = 50
-//    val int posTapparellaCamerettaGiorno = 50
     val float sunEl    = (SunElevation.state as Number).floatValue
     val int flagTapparelleAperte = if(vFlagTapparelleAperte.state == NULL) 0 else (vFlagTapparelleAperte.state as Number).intValue
     val int flagTapparelleChiuse = if(vFlagTapparelleChiuse.state == NULL) 0 else (vFlagTapparelleChiuse.state as Number).intValue
     val int flagTendaAperta = if(vFlagTendaAperta.state == NULL) 0 else if(vFlagTendaAperta.state == ON) 1 else 0
     val int flagTendaChiusa = if(vFlagTendaChiusa.state == NULL) 0 else if(vFlagTendaChiusa.state == ON) 1 else 0
-     // Prodino0_optoIn0: 0 = DISINSERITO, 1 = INSERITO
     val int allarme = if(Prodino0_optoIn0.state == NULL) 0 else (Prodino0_optoIn0.state as Number).intValue
 
-    // --- Override manuale (impediscono all'automazione di sovrascrivere una scelta manuale) ---
     val int overrideTenda = if(vTendaOverrideManuale.state == ON) 1 else 0
     val int overrideTapparelle = if(vTapparelleOverrideManuale.state == ON) 1 else 0
 
-    // --- DIAGNOSTICA TEMPORANEA ---
-    //gInfo("Rule Astro", "sunEl=" + sunEl + " flagChiusi=" + flagTapparelleChiuse + " allarme=" + allarme.state)
+    // --- Inizializzazione flag se NULL ---
+    if(vFlagTapparelleAperte.state == NULL) { vFlagTapparelleAperte.postUpdate(0) }
+    if(vFlagTapparelleChiuse.state == NULL) { vFlagTapparelleChiuse.postUpdate(0) }
+    if(vFlagTendaAperta.state == NULL) { vFlagTendaAperta.postUpdate(OFF) }
+    if(vFlagTendaChiusa.state == NULL) { vFlagTendaChiusa.postUpdate(OFF) }
+    if(vTendaOverrideManuale.state == NULL) { vTendaOverrideManuale.postUpdate(OFF) }
+    if(vTapparelleOverrideManuale.state == NULL) { vTapparelleOverrideManuale.postUpdate(OFF) }
 
-    // --- Inizializzazione flag se NULL (primo avvio prima di restoreOnStartup) ---
-    if(vFlagTapparelleAperte.state == NULL) {
-        logWarn("Rule Astro", "vFlagTapparelleAperte è NULL, inizializzo a 0")
-        vFlagTapparelleAperte.postUpdate(0)
-    }
-    if(vFlagTapparelleChiuse.state == NULL) {
-        logWarn("Rule Astro", "vFlagTapparellachiusi è NULL, inizializzo a 0")
-        vFlagTapparelleChiuse.postUpdate(0)
-    }
-    if(vFlagTendaAperta.state == NULL) {
-        logWarn("Rule Astro", "vFlagTendaAperta è NULL, inizializzo a OFF")
-        vFlagTendaAperta.postUpdate(OFF)
-    }
-    if(vFlagTendaChiusa.state == NULL) {
-        logWarn("Rule Astro", "vFlagTendaChiusa è NULL, inizializzo a OFF")
-        vFlagTendaChiusa.postUpdate(OFF)
-    }
-    if(vTendaOverrideManuale.state == NULL) {
-        logWarn("Rule Astro", "vTendaOverrideManuale è NULL, inizializzo a OFF")
-        vTendaOverrideManuale.postUpdate(OFF)
-    }
-    if(vTapparelleOverrideManuale.state == NULL) {
-        logWarn("Rule Astro", "vTapparelleOverrideManuale è NULL, inizializzo a OFF")
-        vTapparelleOverrideManuale.postUpdate(OFF)
-    }
-
-
-    
     // --- Luce esterna ---
     if(sunEl <= sogliaAlbaTramonto && FGS222_004_SwitchBinary1.state == OFF) {
         logInfo("Rule Astro", "SunElevation <=  (" + sunEl + "°), accendo luce esterna")
         FGS222_004_SwitchBinary1.sendCommand(ON)
     }
-
     if(sunEl > sogliaAlbaTramonto && FGS222_004_SwitchBinary1.state == ON) {
         logInfo("Rule Astro", "SunElevation > (" + sunEl + "°), spengo luce esterna")
         FGS222_004_SwitchBinary1.sendCommand(OFF)
     }
 
     // --- Chiusura tapparelle a sera ---
-    // Prodino0_optoIn0: 0 = DISINSERITO, 1 = INSERITO
-    if(sunEl < sogliaChiusuraTapparelle && allarme == 0 && flagTapparelleChiuse == 0 && overrideTapparelle == 0) {
-        logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparelle")
-        vTapparelleComandoAutomatico.postUpdate(ON)
-        TapparellaLetto.sendCommand(posTapparellaLettoNotte)
-        TapparellaStudio.sendCommand(posTapparellaStudioNotte)
-        TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoNotte)
-        TapparellaCameretta.sendCommand(posTapparellaCamerettaNotte)
-        createTimer(now.plusSeconds(3), [ | vTapparelleComandoAutomatico.postUpdate(OFF) ])
+    if(sunEl < sogliaChiusuraTapparelle && allarme == 0 && flagTapparelleChiuse == 0) {
+        if(overrideTapparelle == 0) {
+            logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparelle")
+            vTapparellaLettoAuto.postUpdate(ON)
+            vTapparellaStudioAuto.postUpdate(ON)
+            vTapparellaSoggiornoAuto.postUpdate(ON)
+            vTapparellaCamerettaAuto.postUpdate(ON)
+            TapparellaLetto.sendCommand(posTapparellaLettoNotte)
+            TapparellaStudio.sendCommand(posTapparellaStudioNotte)
+            TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoNotte)
+            TapparellaCameretta.sendCommand(posTapparellaCamerettaNotte)
+        } else {
+            logInfo("Rule Astro", "Chiusura tapparelle saltata per override manuale")
+            vTapparelleOverrideManuale.postUpdate(OFF)
+        }
         vFlagTapparelleChiuse.postUpdate(1)
     }
 
     // --- Apertura tapparelle al mattino ---
-    if(sunEl >= sogliaAperturaTapparelle1 && allarme == 0 && flagTapparelleAperte == 0 && isBankHoliday == false && isWeekend == false && overrideTapparelle == 0) {
-        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparelle soggiorno e studio")
-        vTapparelleComandoAutomatico.postUpdate(ON)
-        if (TapparellaSoggiorno.state == posTapparellaSoggiornoNotte) {
-            TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoGiorno)
+    if(sunEl >= sogliaAperturaTapparelle1 && allarme == 0 && flagTapparelleAperte == 0 && isBankHoliday == false && isWeekend == false) {
+        if(overrideTapparelle == 0) {
+            logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparelle soggiorno e studio")
+            if (TapparellaSoggiorno.state == posTapparellaSoggiornoNotte) {
+                vTapparellaSoggiornoAuto.postUpdate(ON)
+                TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoGiorno)
+            }
+            if (TapparellaStudio.state == posTapparellaStudioNotte) {
+                vTapparellaStudioAuto.postUpdate(ON)
+                TapparellaStudio.sendCommand(posTapparellaStudioGiorno)
+            }
+        } else {
+            logInfo("Rule Astro", "Apertura tapparelle saltata per override manuale")
+            vTapparelleOverrideManuale.postUpdate(OFF)
         }
-        if (TapparellaStudio.state == posTapparellaStudioNotte) {
-            TapparellaStudio.sendCommand(posTapparellaStudioGiorno)
-        }
-        createTimer(now.plusSeconds(3), [ | vTapparelleComandoAutomatico.postUpdate(OFF) ])
         vFlagTapparelleAperte.postUpdate(1)
     }
 
-    // --- Apertura tenda al mattino (sole sopra soglia alta) ---
-    if(sunEl >= sogliaAperturaTenda && flagTendaAperta == 0 && overrideTenda == 0) {
-        logInfo("Rule Astro", "SunElevation >= " + sogliaAperturaTenda + " (" + sunEl + "°), apro tenda")
-        vTendaComandoAutomatico.postUpdate(ON)
-        FGR223_014_BlindsControl.sendCommand(0)      //
-        createTimer(now.plusSeconds(3), [ | vTendaComandoAutomatico.postUpdate(OFF) ])
+    // --- Apertura tenda al mattino ---
+    if(sunEl >= sogliaAperturaTenda && flagTendaAperta == 0) {
+        if(overrideTenda == 0) {
+            logInfo("Rule Astro", "SunElevation >= " + sogliaAperturaTenda + " (" + sunEl + "°), apro tenda")
+            vTendaComandoAutomatico.postUpdate(ON)
+            FGR223_014_BlindsControl.sendCommand(0)
+        } else {
+            logInfo("Rule Astro", "Apertura tenda saltata per override manuale")
+            vTendaOverrideManuale.postUpdate(OFF)
+        }
         vFlagTendaAperta.postUpdate(ON)
         vFlagTendaChiusa.postUpdate(OFF)
     }
 
-    // --- Chiusura tenda al tramonto (sole sotto soglia bassa) ---
-    if(sunEl < sogliaChiusuraTenda && flagTendaChiusa == 0 && overrideTenda == 0) {
-        logInfo("Rule Astro", "SunElevation < " + sogliaChiusuraTenda + " (" + sunEl + "°), chiudo tenda")
-        vTendaComandoAutomatico.postUpdate(ON)
-        FGR223_014_BlindsControl.sendCommand(100)    //
-        createTimer(now.plusSeconds(3), [ | vTendaComandoAutomatico.postUpdate(OFF) ])
+    // --- Chiusura tenda al tramonto ---
+    if(sunEl < sogliaChiusuraTenda && flagTendaChiusa == 0) {
+        if(overrideTenda == 0) {
+            logInfo("Rule Astro", "SunElevation < " + sogliaChiusuraTenda + " (" + sunEl + "°), chiudo tenda")
+            vTendaComandoAutomatico.postUpdate(ON)
+            FGR223_014_BlindsControl.sendCommand(100)
+        } else {
+            logInfo("Rule Astro", "Chiusura tenda saltata per override manuale")
+            vTendaOverrideManuale.postUpdate(OFF)
+        }
         vFlagTendaChiusa.postUpdate(ON)
         vFlagTendaAperta.postUpdate(OFF)
     }
 
-    // --- Reset flag apertura (sole sceso sotto soglia apertura) ---
+    // --- Reset flag apertura/chiusura tenda ---
     if(sunEl < sogliaAperturaTenda && flagTendaAperta == 1 && sunEl >= sogliaChiusuraTenda) {
-        logInfo("Rule Astro", "SunElevation < " + sogliaAperturaTenda + " (" + sunEl + "°), reset flag apertura tenda")
         vFlagTendaAperta.postUpdate(OFF)
     }
-
-    // --- Reset flag chiusura (sole risalito sopra soglia chiusura) ---
     if(sunEl >= sogliaChiusuraTenda && flagTendaChiusa == 1 && sunEl < sogliaAperturaTenda) {
-        logInfo("Rule Astro", "SunElevation >= " + sogliaChiusuraTenda + " (" + sunEl + "°), reset flag chiusura tenda")
         vFlagTendaChiusa.postUpdate(OFF)
     }
 
-    // --- Reset override tenda: solo quando si attraversa una delle due soglie che riavviano il ciclo ---
-    if((sunEl >= sogliaAperturaTenda || sunEl < sogliaChiusuraTenda) && overrideTenda == 1) {
-        logInfo("Rule Astro", "Reset override manuale tenda")
-        vTendaOverrideManuale.postUpdate(OFF)
-    }
-
-    // --- Reset flag chiusura tapperelle---
+    // --- Reset flag apertura/chiusura tapparelle ---
     if(sunEl >= sogliaChiusuraTapparelle && flagTapparelleChiuse == 1) {
-        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), reset flag chiusura tapparelle")
         vFlagTapparelleChiuse.postUpdate(0)
     }
-
-    // --- Reset flag apertura tapparelle---
     if(sunEl < sogliaAperturaTapparelle && flagTapparelleAperte == 1) {
-        logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), reset flag apertura tapparelle")
         vFlagTapparelleAperte.postUpdate(0)
-    }
-
-    // --- Reset override tapparelle: solo quando si attraversa una delle due soglie che riavviano il ciclo ---
-    if((sunEl >= sogliaChiusuraTapparelle || sunEl < sogliaAperturaTapparelle) && overrideTapparelle == 1) {
-        logInfo("Rule Astro", "Reset override manuale tapparelle")
-        vTapparelleOverrideManuale.postUpdate(OFF)
-    }
-end
-
-
-rule "Rileva comando manuale Tenda"
-when
-    Item FGR223_014_BlindsControl received command
-then
-    if (vTendaComandoAutomatico.state != ON) {
-        logInfo("Rule Tenda Manuale", "Comando manuale rilevato sulla tenda, sospendo l'automazione fino al prossimo ciclo")
-        vTendaOverrideManuale.postUpdate(ON)
     }
 end
 
 
 rule "Rileva comando manuale Tapparelle"
 when
-    Item TapparellaLetto received command or
-    Item TapparellaStudio received command or
-    Item TapparellaSoggiorno received command or
-    Item TapparellaCameretta received command
+    Item TapparellaLettoStatus changed to "close" or
+    Item TapparellaLettoStatus changed to "open" or
+    Item TapparellaStudioStatus changed to "close" or
+    Item TapparellaStudioStatus changed to "open" or
+    Item TapparellaSoggiornoStatus changed to "close" or
+    Item TapparellaSoggiornoStatus changed to "open" or
+    Item TapparellaCamerettaStatus changed to "close" or
+    Item TapparellaCamerettaStatus changed to "open"
 then
-    if (vTapparelleComandoAutomatico.state != ON) {
-        logInfo("Rule Tapparelle Manuale", "Comando manuale rilevato su " + triggeringItem.name + ", sospendo l'automazione fino al prossimo ciclo")
+    val String nome = triggeringItem.name.replace("Status", "")
+    val SwitchItem autoFlag = switch nome {
+        case "TapparellaLetto":      vTapparellaLettoAuto
+        case "TapparellaStudio":     vTapparellaStudioAuto
+        case "TapparellaSoggiorno":  vTapparellaSoggiornoAuto
+        case "TapparellaCameretta":  vTapparellaCamerettaAuto
+    }
+    if (autoFlag.state != ON) {
+        logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su " + nome + ", sospendo l'automazione per questa tapparella fino alla prossima soglia")
         vTapparelleOverrideManuale.postUpdate(ON)
+    }
+end
+
+
+rule "Fine movimento Tapparelle"
+when
+    Item TapparellaLettoStatus changed to "stop" or
+    Item TapparellaStudioStatus changed to "stop" or
+    Item TapparellaSoggiornoStatus changed to "stop" or
+    Item TapparellaCamerettaStatus changed to "stop"
+then
+    val String nome = triggeringItem.name.replace("Status", "")
+    val SwitchItem autoFlag = switch nome {
+        case "TapparellaLetto":      vTapparellaLettoAuto
+        case "TapparellaStudio":     vTapparellaStudioAuto
+        case "TapparellaSoggiorno":  vTapparellaSoggiornoAuto
+        case "TapparellaCameretta":  vTapparellaCamerettaAuto
+    }
+    if (autoFlag.state == ON) {
+        autoFlag.postUpdate(OFF)
+    }
+end
+
+
+rule "Rileva comando manuale Tenda"
+when
+    Item FGR223_014_MeterWatts changed
+then
+    val float watts = (FGR223_014_MeterWatts.state as Number).floatValue
+    if(watts >= 2 && vTendaComandoAutomatico.state != ON) {
+        logInfo("Rule Tenda Manuale", "Movimento manuale rilevato sulla tenda, sospendo l'automazione fino alla prossima soglia")
+        vTendaOverrideManuale.postUpdate(ON)
+    }
+end
+
+
+rule "Fine movimento Tenda"
+when
+    Item FGR223_014_MeterWatts changed
+then
+    val float watts = (FGR223_014_MeterWatts.state as Number).floatValue
+    if(watts < 2 && vTendaComandoAutomatico.state == ON) {
+        vTendaComandoAutomatico.postUpdate(OFF)
     }
 end

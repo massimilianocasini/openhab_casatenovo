@@ -5,7 +5,7 @@ rule "MQTT stato device case"
     val host = triggeringItem
     switch(host.state) {
         case ON: {
-            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot") 
+            val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo") 
             //logInfo("Network-case", "Host in ON " + host.name)
             logInfo("MQTT stato device case ON", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
             {
@@ -15,7 +15,7 @@ rule "MQTT stato device case"
             }
         }
         case OFF: {
-            val telegramActions = getActions("telegram","telegram:telegramBot:Telegram_Bot")
+            val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
             logInfo("MQTT stato device case OFF", "Valore di host.name: " + host.name + " (Tipo: " + host.name.getClass() + ")")
             {
                 if (telegramActions !== null) {
