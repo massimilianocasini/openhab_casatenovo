@@ -35,7 +35,10 @@ Number:Dimensionless Presa1GarageSignal "Presa Garage 1 Segnale" (gGaragePowerOu
 Number:Temperature Presa1GarageTemperature "Presa Garage 1 Temperatura" (gGaragePowerOut) ["Measurement", "Temperature"] {channel="shelly:shelly1mini:5432046b4d7c:device#internalTemp"}
 
 Switch vTapparelleComandoAutomatico     "Comando automatico tapparelle" 
-Switch vTapparelleOverrideManuale       "Override manuale tapparelle"   <mapdb>
+Switch vTapparellaLettoOverrideManuale      "Override manuale Tapparella Letto" (gMapDb)
+Switch vTapparellaStudioOverrideManuale     "Override manuale Tapparella Studio" (gMapDb)
+Switch vTapparellaSoggiornoOverrideManuale  "Override manuale Tapparella Soggiorno" (gMapDb)
+Switch vTapparellaCamerettaOverrideManuale  "Override manuale Tapparella Cameretta" (gMapDb)
 Number vFlagTapparelleAperte  "Flag apertura tapparelle" (gMapDb) { autoupdate="false" }
 Number vFlagTapparelleChiuse  "Flag chiusura tapparelle" (gMapDb) { autoupdate="false" }
 Switch vTapparellaLettoAuto        "Comando automatico Letto"      
