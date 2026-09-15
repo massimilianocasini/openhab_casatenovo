@@ -230,8 +230,8 @@ end
 
 rule "Rileva comando manuale Tapparella Letto"
 when
-    Item TapparellaLettoStatus changed to "close" or
-    Item TapparellaLettoStatus changed to "open"
+    Item TapparellaLettoStatus changed to "open" or
+    Item TapparellaLettoStatus changed to "close"
 then
     if (vTapparellaLettoAuto.state != ON) {
         logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaLetto, sospendo l'automazione fino alla prossima soglia")
@@ -241,8 +241,8 @@ end
 
 rule "Rileva comando manuale Tapparella Studio"
 when
-    Item TapparellaStudioStatus changed to "close" or
-    Item TapparellaStudioStatus changed to "open"
+    Item TapparellaStudioStatus changed to "open" or
+    Item TapparellaStudioStatus changed to "close" 
 then
     if (vTapparellaStudioAuto.state != ON) {
         logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaStudio, sospendo l'automazione fino alla prossima soglia")
@@ -252,9 +252,9 @@ end
 
 rule "Rileva comando manuale Tapparella Soggiorno"
 when
-    Item TapparellaSoggiornoStatus changed to "close" or
-    Item TapparellaSoggiornoStatus changed to "open"
-then
+    Item TapparellaSoggiornoStatus changed to "opening" or
+    Item TapparellaSoggiornoStatus changed to "closing"
+then 
     if (vTapparellaSoggiornoAuto.state != ON) {
         logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaSoggiorno, sospendo l'automazione fino alla prossima soglia")
         vTapparellaSoggiornoOverrideManuale.postUpdate(ON)
@@ -263,8 +263,8 @@ end
 
 rule "Rileva comando manuale Tapparella Cameretta"
 when
-    Item TapparellaCamerettaStatus changed to "close" or
-    Item TapparellaCamerettaStatus changed to "open"
+    Item TapparellaCamerettaStatus changed to "opening" or
+    Item TapparellaCamerettaStatus changed to "closing"
 then
     if (vTapparellaCamerettaAuto.state != ON) {
         logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaCameretta, sospendo l'automazione fino alla prossima soglia")
