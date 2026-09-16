@@ -1,42 +1,30 @@
 // ============================================================================
 // Regola principale: apre/chiude tenda e tapparelle in base all'elevazione solare.
 //
-// LOGICA "GIORNO / NOTTE" (richiesta):
-//   - Di GIORNO (SunElevation sopra la soglia di chiusura) nessuna automazione
-//     tocca tenda/tapparelle: se l'utente le muove manualmente, restano così
-//     com'è per tutto il resto del giorno (semplicemente perché nessun'altra
-//     regola invia comandi in questa fascia).
-//   - Quando SunElevation SCENDE sotto la soglia di chiusura, tenda e tapparelle
-//     vengono chiuse SEMPRE, anche se durante il giorno erano state modificate
-//     manualmente: qui inizia una nuova fase ("notte") e l'eventuale override
-//     manuale diurno viene "azzerato" (consumato), perché il comando di chiusura
-//     parte comunque.
-//   - Se durante la fase notturna (dopo la chiusura automatica) l'utente
-//     interviene di nuovo manualmente, il flag di override torna ON e la
-//     posizione modificata resta tale per tutta la notte (nessun'altra
-//     automazione la tocca fino al mattino).
-//   - Quando SunElevation SUPERA la soglia di apertura mattutina, tenda e
-//     tapparelle vengono riaperte SEMPRE ("come stabilito"), anche se erano
-//     state modificate manualmente durante la notte: qui inizia la nuova fase
-//     "giorno" e l'override notturno viene azzerato.
+// LOGICA "DUE FASI" (giorno / notte), per la tenda e per le tapparelle
+// indipendentemente:
+//   - Ogni gruppo (tenda, tapparelle) si trova sempre in una delle due fasi:
+//     "aperta/giorno" oppure "chiusa/notte", tracciata da una coppia di flag
+//     mutuamente esclusivi (vFlagXxxAperta / vFlagXxxChiusa).
+//   - DURANTE una fase nessuna regola invia comandi: se l'utente muove
+//     manualmente la tenda o una tapparella, la posizione resta quella
+//     impostata manualmente per tutto il resto della fase (semplicemente
+//     perché nessun'altra automazione la tocca fino al cambio fase).
+//   - Al CAMBIO fase (SunElevation che supera la soglia di chiusura o quella
+//     di apertura) il comando automatico viene inviato SEMPRE, a prescindere
+//     dalla posizione attuale e da eventuali interventi manuali avvenuti
+//     nella fase appena conclusa: è il comando che apre ufficialmente la
+//     nuova fase, e nello stesso momento il flag della fase opposta viene
+//     azzerato, così il prossimo cambio fase potrà scattare di nuovo.
+//   - Gli item vXxxOverrideManuale non decidono più se muovere o no: servono
+//     solo a segnalare (log / eventuale dashboard) che nella fase corrente
+//     c'è stato un intervento manuale, e vengono azzerati ad ogni cambio fase.
 //
-// In pratica: il comando automatico alla soglia (chiusura serale / apertura
-// mattutina) NON viene più saltato per via dell'override manuale: l'override
-// serve solo a "proteggere" la posizione manuale nell'intervallo TRA una
-// soglia e l'altra, non oltre. Il flag vXxxOverrideManuale resta comunque utile
-// come informazione (es. per un pannello di stato) e viene sempre riportato a
-// OFF non appena l'automazione esegue l'azione della fase successiva.
-//
-// ECCEZIONI MANTENUTE INVARIATE (su richiesta esplicita):
-//   - L'apertura automatica mattutina riguarda SOLO TapparellaSoggiorno e
-//     TapparellaStudio: TapparellaLetto e TapparellaCameretta vengono chiuse
-//     la sera ma non vengono mai riaperte automaticamente (restano quindi
-//     "in override" fino alla chiusura serale successiva, che le azzera).
-//   - L'apertura di Soggiorno/Studio è saltata nei weekend/festivi.
-//   - Soggiorno/Studio vengono riaperte automaticamente SOLO SE si trovano
-//     ancora nella posizione di "notte": se l'utente le ha spostate altrove
-//     durante la notte, il comando di apertura non viene inviato (la logica
-//     "sempre eseguito" qui NON si applica, per scelta esplicita).
+// ECCEZIONE MANTENUTA (su richiesta esplicita): l'apertura automatica
+// mattutina riguarda SOLO TapparellaSoggiorno e TapparellaStudio;
+// TapparellaLetto e TapparellaCameretta vengono chiuse la sera ma non
+// vengono mai riaperte automaticamente. L'apertura di Soggiorno/Studio resta
+// saltata nei weekend/festivi.
 // ============================================================================
 rule "Esegui azioni in base a SunElevation"
 when
@@ -48,10 +36,9 @@ then
         return;
     }
         // --- Valori configurabili ---
-    val int sogliaAlbaTramonto = 0
+    val int sogliaAlbaTramonto          = 0
     val int sogliaChiusuraTapparelle    = -10
-    val int sogliaAperturaTapparelle    = 10
-    val int sogliaAperturaTapparelle1   = 20
+    val int sogliaAperturaTapparelle    = 20
     val int sogliaAperturaTenda         = 15
     val int sogliaChiusuraTenda         = 10
     val int posTapparellaLettoNotte     = 92
@@ -66,16 +53,6 @@ then
     val int flagTendaAperta = if(vFlagTendaAperta.state == NULL) 0 else if(vFlagTendaAperta.state == ON) 1 else 0
     val int flagTendaChiusa = if(vFlagTendaChiusa.state == NULL) 0 else if(vFlagTendaChiusa.state == ON) 1 else 0
     val int allarme = if(Prodino0_optoIn0.state == NULL) 0 else (Prodino0_optoIn0.state as Number).intValue
-
-    // NOTA: gli override manuali (letti qui sotto) NON vengono più usati per
-    // saltare il comando automatico alla soglia: sono solo informativi e
-    // vengono riportati a OFF quando l'automazione esegue l'azione della
-    // fase successiva (vedi commenti nei blocchi più sotto).
-    val int overrideTenda = if(vTendaOverrideManuale.state == ON) 1 else 0
-    val int overrideTapparellaLetto      = if(vTapparellaLettoOverrideManuale.state == ON) 1 else 0
-    val int overrideTapparellaStudio     = if(vTapparellaStudioOverrideManuale.state == ON) 1 else 0
-    val int overrideTapparellaSoggiorno  = if(vTapparellaSoggiornoOverrideManuale.state == ON) 1 else 0
-    val int overrideTapparellaCameretta  = if(vTapparellaCamerettaOverrideManuale.state == ON) 1 else 0
 
     // --- Inizializzazione flag se NULL ---
     if(vFlagTapparelleAperte.state == NULL) { vFlagTapparelleAperte.postUpdate(0) }
@@ -98,83 +75,59 @@ then
         FGS222_004_SwitchBinary1.sendCommand(OFF)
     }
 
-    // --- Chiusura tapparelle a sera (per singola tapparella) ---
-    // Fine fase "giorno": le tapparelle vengono chiuse SEMPRE, anche se erano
-    // state modificate manualmente durante il giorno. L'override diurno viene
-    // azzerato qui perché la fase giorno è terminata: da qui in poi un nuovo
-    // intervento manuale sarà considerato "notturno" e protetto fino al mattino.
+    // --- Chiusura tapparelle a sera: fine fase giorno, inizio fase notte ---
+    // Il comando di chiusura parte sempre per tutte e 4, a prescindere dalla
+    // posizione attuale e da eventuali interventi manuali fatti di giorno.
+    // vFlagTapparelleAperte viene azzerato qui: la fase giorno è chiusa,
+    // il prossimo superamento della soglia di apertura potrà quindi riaprire.
     if(sunEl < sogliaChiusuraTapparelle && allarme == 0 && flagTapparelleChiuse == 0) {
-        if(overrideTapparellaLetto == 1) {
-            logInfo("Rule Astro", "Tapparella Letto era stata modificata manualmente di giorno: chiudo comunque (nuova fase notte)")
-        }
         logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparella Letto")
         vTapparellaLettoAuto.postUpdate(ON)
         TapparellaLetto.sendCommand(posTapparellaLettoNotte)
         vTapparellaLettoOverrideManuale.postUpdate(OFF)
 
-        if(overrideTapparellaStudio == 1) {
-            logInfo("Rule Astro", "Tapparella Studio era stata modificata manualmente di giorno: chiudo comunque (nuova fase notte)")
-        }
         logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparella Studio")
         vTapparellaStudioAuto.postUpdate(ON)
         TapparellaStudio.sendCommand(posTapparellaStudioNotte)
         vTapparellaStudioOverrideManuale.postUpdate(OFF)
 
-        if(overrideTapparellaSoggiorno == 1) {
-            logInfo("Rule Astro", "Tapparella Soggiorno era stata modificata manualmente di giorno: chiudo comunque (nuova fase notte)")
-        }
         logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparella Soggiorno")
         vTapparellaSoggiornoAuto.postUpdate(ON)
         TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoNotte)
         vTapparellaSoggiornoOverrideManuale.postUpdate(OFF)
 
-        if(overrideTapparellaCameretta == 1) {
-            logInfo("Rule Astro", "Tapparella Cameretta era stata modificata manualmente di giorno: chiudo comunque (nuova fase notte)")
-        }
         logInfo("Rule Astro", "SunElevation < (" + sunEl + "°), chiudo tapparella Cameretta")
         vTapparellaCamerettaAuto.postUpdate(ON)
         TapparellaCameretta.sendCommand(posTapparellaCamerettaNotte)
         vTapparellaCamerettaOverrideManuale.postUpdate(OFF)
 
         vFlagTapparelleChiuse.postUpdate(1)
+        vFlagTapparelleAperte.postUpdate(0)
     }
 
-    // --- Apertura tapparelle al mattino (solo Soggiorno e Studio, per singola tapparella) ---
-    // Fine fase "notte": l'override notturno viene azzerato comunque, perché la
-    // fase notte è terminata. ECCEZIONE MANTENUTA: il comando di apertura viene
-    // inviato solo se la tapparella è ancora nella posizione di "notte" (se
-    // l'utente l'ha spostata altrove durante la notte, qui NON la tocchiamo:
-    // comportamento invariato su richiesta esplicita).
-    if(sunEl >= sogliaAperturaTapparelle1 && allarme == 0 && flagTapparelleAperte == 0 && isBankHoliday == false && isWeekend == false) {
-        if (TapparellaSoggiorno.state == posTapparellaSoggiornoNotte) {
-            logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparella Soggiorno")
-            vTapparellaSoggiornoAuto.postUpdate(ON)
-            TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoGiorno)
-        } else if(overrideTapparellaSoggiorno == 1) {
-            logInfo("Rule Astro", "Tapparella Soggiorno non è in posizione notte (modificata manualmente): apertura automatica saltata")
-        }
+    // --- Apertura tapparelle al mattino: fine fase notte, inizio fase giorno ---
+    // (solo Soggiorno e Studio, eccezione mantenuta). Il comando di apertura
+    // parte sempre, a prescindere dalla posizione attuale e da eventuali
+    // interventi manuali fatti di notte.
+    if(sunEl >= sogliaAperturaTapparelle && allarme == 0 && flagTapparelleAperte == 0 && isBankHoliday == false && isWeekend == false) {
+        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparella Soggiorno")
+        vTapparellaSoggiornoAuto.postUpdate(ON)
+        TapparellaSoggiorno.sendCommand(posTapparellaSoggiornoGiorno)
         vTapparellaSoggiornoOverrideManuale.postUpdate(OFF)
 
-        if (TapparellaStudio.state == posTapparellaStudioNotte) {
-            logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparella Studio")
-            vTapparellaStudioAuto.postUpdate(ON)
-            TapparellaStudio.sendCommand(posTapparellaStudioGiorno)
-        } else if(overrideTapparellaStudio == 1) {
-            logInfo("Rule Astro", "Tapparella Studio non è in posizione notte (modificata manualmente): apertura automatica saltata")
-        }
+        logInfo("Rule Astro", "SunElevation >= (" + sunEl + "°), apro tapparella Studio")
+        vTapparellaStudioAuto.postUpdate(ON)
+        TapparellaStudio.sendCommand(posTapparellaStudioGiorno)
         vTapparellaStudioOverrideManuale.postUpdate(OFF)
 
         vFlagTapparelleAperte.postUpdate(1)
+        vFlagTapparelleChiuse.postUpdate(0)
     }
 
-    // --- Apertura tenda al mattino ---
-    // Fine fase "notte": la tenda si apre SEMPRE, anche se era stata modificata
-    // manualmente durante la notte. L'override notturno viene azzerato qui:
-    // da qui in poi un nuovo intervento manuale sarà considerato "diurno".
+    // --- Apertura tenda al mattino: fine fase notte, inizio fase giorno ---
+    // Il comando parte sempre, a prescindere da eventuali interventi manuali
+    // fatti di notte.
     if(sunEl >= sogliaAperturaTenda && flagTendaAperta == 0) {
-        if(overrideTenda == 1) {
-            logInfo("Rule Astro", "Tenda era stata modificata manualmente di notte: apro comunque (nuova fase giorno)")
-        }
         logInfo("Rule Astro", "SunElevation >= " + sogliaAperturaTenda + " (" + sunEl + "°), apro tenda")
         vTendaComandoAutomatico.postUpdate(ON)
         FGR223_014_BlindsControl.sendCommand(0)
@@ -184,15 +137,10 @@ then
         vFlagTendaChiusa.postUpdate(OFF)
     }
 
-    // --- Chiusura tenda al tramonto ---
-    // Fine fase "giorno": la tenda si chiude SEMPRE, anche se era stata
-    // modificata manualmente durante il giorno. L'override diurno viene
-    // azzerato qui: da qui in poi un nuovo intervento manuale sarà considerato
-    // "notturno" e la posizione resterà protetta fino al mattino successivo.
+    // --- Chiusura tenda al tramonto: fine fase giorno, inizio fase notte ---
+    // Il comando parte sempre, a prescindere da eventuali interventi manuali
+    // fatti di giorno.
     if(sunEl < sogliaChiusuraTenda && flagTendaChiusa == 0) {
-        if(overrideTenda == 1) {
-            logInfo("Rule Astro", "Tenda era stata modificata manualmente di giorno: chiudo comunque (nuova fase notte)")
-        }
         logInfo("Rule Astro", "SunElevation < " + sogliaChiusuraTenda + " (" + sunEl + "°), chiudo tenda")
         vTendaComandoAutomatico.postUpdate(ON)
         FGR223_014_BlindsControl.sendCommand(100)
@@ -201,31 +149,14 @@ then
         vFlagTendaChiusa.postUpdate(ON)
         vFlagTendaAperta.postUpdate(OFF)
     }
-
-    // --- Reset flag apertura/chiusura tenda (isteresi tra le due soglie) ---
-    if(sunEl < sogliaAperturaTenda && flagTendaAperta == 1 && sunEl >= sogliaChiusuraTenda) {
-        vFlagTendaAperta.postUpdate(OFF)
-    }
-    if(sunEl >= sogliaChiusuraTenda && flagTendaChiusa == 1 && sunEl < sogliaAperturaTenda) {
-        vFlagTendaChiusa.postUpdate(OFF)
-    }
-
-    // --- Reset flag apertura/chiusura tapparelle (isteresi tra le due soglie) ---
-    if(sunEl >= sogliaChiusuraTapparelle && flagTapparelleChiuse == 1) {
-        vFlagTapparelleChiuse.postUpdate(0)
-    }
-    if(sunEl < sogliaAperturaTapparelle && flagTapparelleAperte == 1) {
-        vFlagTapparelleAperte.postUpdate(0)
-    }
 end
 
 // ============================================================================
 // Regole di rilevamento comando manuale: quando un dispositivo si muove SENZA
 // che sia stata l'automazione a comandarlo (vXxxAuto / vTendaComandoAutomatico
-// non è ON), impostiamo il flag di override. Questo flag viene poi azzerato
-// automaticamente dalla regola principale non appena scatta la soglia della
-// fase successiva (vedi commenti sopra) — non è più la regola stessa a
-// "consumare" l'override, ma la regola principale.
+// non è ON), impostiamo il flag di override. Il flag è puramente informativo
+// (log / eventuale dashboard): non blocca più nessuna azione automatica, e
+// viene azzerato dalla regola principale ad ogni cambio fase.
 // ============================================================================
 
 rule "Rileva comando manuale Tapparella Letto"
@@ -234,7 +165,7 @@ when
     Item TapparellaLettoStatus changed to "close"
 then
     if (vTapparellaLettoAuto.state != ON) {
-        logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaLetto, sospendo l'automazione fino alla prossima soglia")
+        logInfo("Rule Astro", "Movimento manuale rilevato su TapparellaLetto, sospendo l'automazione fino alla prossima soglia")
         vTapparellaLettoOverrideManuale.postUpdate(ON)
     }
 end
@@ -242,10 +173,10 @@ end
 rule "Rileva comando manuale Tapparella Studio"
 when
     Item TapparellaStudioStatus changed to "open" or
-    Item TapparellaStudioStatus changed to "close" 
+    Item TapparellaStudioStatus changed to "close"
 then
     if (vTapparellaStudioAuto.state != ON) {
-        logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaStudio, sospendo l'automazione fino alla prossima soglia")
+        logInfo("Rule Astro", "Movimento manuale rilevato su TapparellaStudio, sospendo l'automazione fino alla prossima soglia")
         vTapparellaStudioOverrideManuale.postUpdate(ON)
     }
 end
@@ -254,9 +185,9 @@ rule "Rileva comando manuale Tapparella Soggiorno"
 when
     Item TapparellaSoggiornoStatus changed to "opening" or
     Item TapparellaSoggiornoStatus changed to "closing"
-then 
+then
     if (vTapparellaSoggiornoAuto.state != ON) {
-        logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaSoggiorno, sospendo l'automazione fino alla prossima soglia")
+        logInfo("Rule Astro", "Movimento manuale rilevato su TapparellaSoggiorno, sospendo l'automazione fino alla prossima soglia")
         vTapparellaSoggiornoOverrideManuale.postUpdate(ON)
     }
 end
@@ -267,7 +198,7 @@ when
     Item TapparellaCamerettaStatus changed to "closing"
 then
     if (vTapparellaCamerettaAuto.state != ON) {
-        logInfo("Rule Tapparelle Manuale", "Movimento manuale rilevato su TapparellaCameretta, sospendo l'automazione fino alla prossima soglia")
+        logInfo("Rule Astro", "Movimento manuale rilevato su TapparellaCameretta, sospendo l'automazione fino alla prossima soglia")
         vTapparellaCamerettaOverrideManuale.postUpdate(ON)
     }
 end
@@ -316,7 +247,7 @@ when
 then
     val float watts = (FGR223_014_MeterWatts.state as Number).floatValue
     if(watts >= 2 && vTendaComandoAutomatico.state != ON) {
-        logInfo("Rule Tenda Manuale", "Movimento manuale rilevato sulla tenda, sospendo l'automazione fino alla prossima soglia")
+        logInfo("Rule Astro", "Movimento manuale rilevato sulla tenda, sospendo l'automazione fino alla prossima soglia")
         vTendaOverrideManuale.postUpdate(ON)
     }
 end
