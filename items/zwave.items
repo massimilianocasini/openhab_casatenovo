@@ -82,8 +82,8 @@ Switch WPS104_015_SwitchBinary "Switch esterno"  {channel="zwave:device:1f2db33f
 Number WPS104_015_SensorPower  "Sensore di potenza [%.0f]" <energy> {channel="zwave:device:1f2db33fb0:node15:sensor_power"}
 Number:ElectricPotential WPS104_015_MeterVoltage "Tensione rete [%.1f V]" <energy> (gQuadroElettrico,gInfluxdb) ["Measurement", "Voltage"] {channel="zwave:device:1f2db33fb0:node15:meter_voltage"}
 Number WPS104_015_MeterPowerFactor "Sfasamento rete [%.0f φ]" <energy> (gQuadroElettrico,gInfluxdb) ["Measurement"] {channel="zwave:device:1f2db33fb0:node15:meter_powerfactor"}
-Number:ElectricCurrent WPS104_015_MeterCurrent "Corrente assorbita [%.1f A]" <energy> (gQuadroElettrico,gInfluxdb) ["Measurement", "Current"] {channel="zwave:device:1f2db33fb0:node15:meter_current"}
-Number:Power WPS104_015_MeterWatts "Potenza richiesta scaldabagno [%.0f W]" <fan> (gQuadroElettrico, gInfluxdb) ["Measurement", "Power"] {channel="zwave:device:1f2db33fb0:node15:meter_watts"}
+Number:ElectricCurrent WPS104_015_MeterCurrent "Corrente assorbita [%.1f A]" <energy> (gQuadroElettrico,gInfluxdb, gMapDb) ["Measurement", "Current"] {channel="zwave:device:1f2db33fb0:node15:meter_current"}
+Number:Power WPS104_015_MeterWatts "Potenza richiesta scaldabagno [%.0f W]" <fan> (gQuadroElettrico, gInfluxdb, gMapDb) ["Measurement", "Power"] {channel="zwave:device:1f2db33fb0:node15:meter_watts"}
 Number:Energy WPS104_015_MeterKwh "Energia consumata [%.1f kWh]" <fan> (gQuadroElettrico,gInfluxdb) ["Measurement", "Energy"] {channel="zwave:device:1f2db33fb0:node15:meter_kwh"}
 String WPS104_015_tensione_potenza "Temp Aussen [%s]"
 Switch  WPS104_015_ResetMeter "Reset contatori" (gQuadroElettrico) {channel="zwave:device:1f2db33fb0:node15:meter_reset"}
