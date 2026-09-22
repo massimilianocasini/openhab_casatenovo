@@ -73,6 +73,8 @@ Number:Energy FGR223_014_MeterKwh  "Energia consumata"  {channel="zwave:device:1
 //Flag stato Pergotenda (persistiti su mapdb)
 Switch vFlagTendaAperta  "Pergotenda aperta" (gMapDb) ["Status"]
 Switch vFlagTendaChiusa  "Pergotenda chiusa" (gMapDb) ["Status"]
+Switch vAstroTendaAperta   "Fase giorno tenda (Astro)"
+Switch vAstroTendaChiusa   "Fase notte tenda (Astro)"
 Switch vTendaComandoAutomatico          "Comando automatico tenda"      
 Switch vTendaOverrideManuale            "Override manuale tenda"
 Number FGR223_014_BlindsControl_Inv "Pergotenda - % aperta"
