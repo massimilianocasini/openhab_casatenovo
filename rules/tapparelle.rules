@@ -1,6 +1,6 @@
 import org.openhab.core.model.script.ScriptServiceUtil
 import java.util.Map
-import java.time.ZonedDateTime
+import java.util.Set
 
 // ============================================================================
 // Automazione tapparelle, pergotenda e inserimento/disinserimento antifurto.
@@ -25,11 +25,14 @@ import java.time.ZonedDateTime
 //     che il disinserimento avvenga entro MINUTI_RIENTRO dall'inserimento
 //     (in quel caso accende solo la luce corridoio).
 //
-// OVERRIDE MANUALE: ogni comando automatico apre per quel dispositivo una
-// finestra di FINESTRA_AUTO_SEC secondi; un movimento che parte fuori dalla
-// finestra è manuale e accende vXxxOverrideManuale, che resta ON fino al
-// prossimo cambio fascia. Per la tenda l'override è solo informativo, perché
-// la tenda viene comandata solo al cambio fascia.
+// OVERRIDE MANUALE (nessuna finestra temporale): ogni comando automatico
+// registra l'obiettivo e la direzione attesa del movimento. È manuale:
+//   - un movimento che parte senza comando automatico in corso;
+//   - un movimento in direzione opposta a quella attesa (controcomando);
+//   - un arresto con la tapparella lontana dall'obiettivo (fermata a metà).
+// L'override accende vXxxOverrideManuale, che resta ON fino al prossimo
+// cambio fascia. Per la tenda vale la stessa logica ma l'override è solo
+// informativo, perché la tenda viene comandata solo al cambio fascia.
 // ============================================================================
 
 val int SOGLIA_NOTTE_TAPPARELLE  = -10
@@ -38,7 +41,7 @@ val int SOGLIA_CHIUSURA_TENDA    = 10
 val int SOGLIA_APERTURA_TENDA    = 15
 val int SOGLIA_LUCE_ESTERNA      = 0
 val int SOGLIA_WATT_TENDA        = 2
-val int FINESTRA_AUTO_SEC        = 120
+val int TOLLERANZA_POS           = 3   // % di scarto ammesso tra obiettivo e posizione finale
 val int MINUTI_RIENTRO           = 5
 
 // Posizioni: 0 = aperta, 100 = chiusa. Le posizioni notte lasciano passare un po' di luce.
@@ -46,17 +49,28 @@ val Map<String, Integer> POS_NOTTE  = newHashMap("TapparellaLetto" -> 92, "Tappa
                                                  "TapparellaSoggiorno" -> 97, "TapparellaCameretta" -> 97)
 val Map<String, Integer> POS_GIORNO = newHashMap("TapparellaSoggiorno" -> 50, "TapparellaStudio" -> 50)
 
-// Istante dell'ultimo comando automatico per dispositivo (tapparelle e "Tenda")
-val Map<String, ZonedDateTime> ultimoComandoAuto = newHashMap
+// Stati del canale roller#state: le Shelly gen1 usano open/close durante il
+// movimento; le Shelly Plus usano opening/closing durante il movimento e
+// open/close come fine corsa.
+val Set<String> SHELLY_GEN1 = newHashSet("TapparellaLetto", "TapparellaStudio")
+
+// Movimenti automatici in corso: dispositivo (tapparelle e "Tenda") -> posizione obiettivo / direzione attesa
+val Map<String, Integer> obiettivoAuto = newHashMap
+val Map<String, String> direzioneAuto = newHashMap
 var Timer timerInserimento = null
 
-// Invia la posizione a una tapparella registrando il comando come automatico.
+// Invia la posizione a una tapparella registrando il movimento come automatico.
 // Con rispettaOverride = true la tapparella viene saltata se ha l'override attivo.
-val Procedures$Procedure4<String, Integer, Boolean, Map<String, ZonedDateTime>> muovi = [ nome, pos, rispettaOverride, comandiAuto |
+// Se è già in posizione non viene comandata (nessun movimento da attendere).
+val Procedures$Procedure5<String, Integer, Boolean, Map<String, Integer>, Map<String, String>> muovi = [ nome, pos, rispettaOverride, obiettivi, direzioni |
+    val attuale = ScriptServiceUtil.getItemRegistry.getItem(nome).state
     if (rispettaOverride && ScriptServiceUtil.getItemRegistry.getItem("v" + nome + "OverrideManuale").state == ON) {
         logInfo("Tapparelle", nome + " non mossa: override manuale attivo in questa fascia")
+    } else if (attuale instanceof Number && Math::abs((attuale as Number).intValue - pos) <= 3) { // 3 = TOLLERANZA_POS
+        logInfo("Tapparelle", nome + " già in posizione (" + attuale + "%)")
     } else {
-        comandiAuto.put(nome, now)
+        obiettivi.put(nome, pos)
+        direzioni.put(nome, if (!(attuale instanceof Number)) "" else if (pos > (attuale as Number).intValue) "GIU" else "SU")
         sendCommand(nome, pos.toString)
         logInfo("Tapparelle", nome + " -> " + pos + "%")
     }
@@ -96,13 +110,13 @@ then
 
             val boolean antifurtoInserito = Prodino0_optoIn0.state instanceof Number && (Prodino0_optoIn0.state as Number).intValue == 1
             if (nuovaFaseTapp == "NOTTE") {
-                POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+                POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, obiettivoAuto, direzioneAuto) ]
             } else if (antifurtoInserito) {
                 logInfo("Tapparelle", "Apertura mattutina saltata: antifurto inserito")
             } else if (isWeekend() || isBankHoliday()) {
                 logInfo("Tapparelle", "Apertura mattutina saltata: weekend o festivo")
             } else {
-                POS_GIORNO.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+                POS_GIORNO.forEach[ nome, pos | muovi.apply(nome, pos, false, obiettivoAuto, direzioneAuto) ]
             }
         }
     }
@@ -119,8 +133,14 @@ then
             logInfo("Tapparelle", "Cambio fase tenda " + faseTenda + " -> " + nuovaFaseTenda + " (" + el + "°)")
             vFaseTenda.postUpdate(nuovaFaseTenda)
             vTendaOverrideManuale.postUpdate(OFF)
-            ultimoComandoAuto.put("Tenda", now)
-            FGR223_014_BlindsControl.sendCommand(if (nuovaFaseTenda == "GIORNO") 0 else 100)
+            val int posTenda = if (nuovaFaseTenda == "GIORNO") 0 else 100
+            val attualeTenda = FGR223_014_BlindsControl.state
+            if (attualeTenda instanceof Number && Math::abs((attualeTenda as Number).intValue - posTenda) <= TOLLERANZA_POS) {
+                logInfo("Tapparelle", "Tenda già in posizione (" + attualeTenda + "%)")
+            } else {
+                obiettivoAuto.put("Tenda", posTenda)
+                FGR223_014_BlindsControl.sendCommand(posTenda)
+            }
         }
     }
 end
@@ -168,7 +188,7 @@ then
         if (giorno) {
             logInfo("Antifurto", "Fascia GIORNO: chiudo tutte le tapparelle e azzero gli override")
             POS_NOTTE.keySet.forEach[ nome | postUpdate("v" + nome + "OverrideManuale", "OFF") ]
-            POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+            POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, obiettivoAuto, direzioneAuto) ]
         } else {
             logInfo("Antifurto", "Fascia NOTTE: tapparelle non mosse")
         }
@@ -184,7 +204,7 @@ then
             logInfo("Antifurto", "Disinserito entro " + MINUTI_RIENTRO + " min dall'inserimento: solo luce corridoio")
         } else if (giorno) {
             logInfo("Antifurto", "Fascia GIORNO: apro le tapparelle senza override")
-            POS_NOTTE.keySet.forEach[ nome | muovi.apply(nome, 0, true, ultimoComandoAuto) ]
+            POS_NOTTE.keySet.forEach[ nome | muovi.apply(nome, 0, true, obiettivoAuto, direzioneAuto) ]
         } else {
             logInfo("Antifurto", "Fascia NOTTE: tapparelle non mosse")
         }
@@ -198,13 +218,34 @@ when
     Item TapparellaSoggiornoStatus changed or
     Item TapparellaCamerettaStatus changed
 then
-    // Shelly gen1 (Letto, Studio): open/close; Shelly Plus (Soggiorno, Cameretta): opening/closing
-    if (!#["open", "close", "opening", "closing"].contains(newState.toString)) return;
     val String nome = triggeringItemName.replace("Status", "")
-    val ZonedDateTime ultimo = ultimoComandoAuto.get(nome)
-    if (ultimo === null || now.isAfter(ultimo.plusSeconds(FINESTRA_AUTO_SEC))) {
-        logInfo("Tapparelle", "Movimento manuale su " + nome + ": esclusa dall'automazione fino alla prossima fascia")
+    val String stato = newState.toString
+    val boolean gen1 = SHELLY_GEN1.contains(nome)
+    val String direzione = if (stato == (if (gen1) "open" else "opening")) "SU"
+                           else if (stato == (if (gen1) "close" else "closing")) "GIU"
+                           else ""
+    val boolean fermo = stato == "stop" || (!gen1 && (stato == "open" || stato == "close"))
+
+    if (direzione != "") {
+        // Movimento iniziato: è automatico solo se c'è un comando in corso nella stessa direzione
+        val String attesa = direzioneAuto.get(nome)
+        if (obiettivoAuto.containsKey(nome) && (attesa == "" || attesa == direzione)) return;
+        obiettivoAuto.remove(nome)
+        direzioneAuto.remove(nome)
+        logInfo("Tapparelle", "Movimento manuale (" + direzione + ") su " + nome + ": esclusa dall'automazione fino alla prossima fascia")
         postUpdate("v" + nome + "OverrideManuale", "ON")
+    } else if (fermo && obiettivoAuto.containsKey(nome)) {
+        // Fine del movimento automatico: se si è fermata lontano dall'obiettivo è stata fermata a mano.
+        // Breve attesa per ricevere dalla Shelly la posizione reale.
+        val Integer obiettivo = obiettivoAuto.remove(nome)
+        direzioneAuto.remove(nome)
+        createTimer(now.plusSeconds(3), [|
+            val pos = ScriptServiceUtil.getItemRegistry.getItem(nome).state
+            if (pos instanceof Number && Math::abs((pos as Number).intValue - obiettivo) > TOLLERANZA_POS) {
+                logInfo("Tapparelle", nome + " fermata a " + pos + "% invece di " + obiettivo + "%: esclusa dall'automazione fino alla prossima fascia")
+                postUpdate("v" + nome + "OverrideManuale", "ON")
+            }
+        ])
     }
 end
 
@@ -215,11 +256,21 @@ then
     if (!(newState instanceof Number)) return;
     val double watt = (newState as Number).doubleValue
     val double wattPrec = if (previousState instanceof Number) (previousState as Number).doubleValue else 0
-    // Solo all'avvio del motore (passaggio sopra soglia)
-    if (watt < SOGLIA_WATT_TENDA || wattPrec >= SOGLIA_WATT_TENDA) return;
-    val ZonedDateTime ultimo = ultimoComandoAuto.get("Tenda")
-    if (ultimo === null || now.isAfter(ultimo.plusSeconds(FINESTRA_AUTO_SEC))) {
+    val boolean avvio = watt >= SOGLIA_WATT_TENDA && wattPrec < SOGLIA_WATT_TENDA
+    val boolean arresto = watt < SOGLIA_WATT_TENDA && wattPrec >= SOGLIA_WATT_TENDA
+
+    if (avvio && !obiettivoAuto.containsKey("Tenda")) {
         logInfo("Tapparelle", "Movimento manuale sulla tenda (override informativo fino alla prossima fascia)")
         vTendaOverrideManuale.postUpdate(ON)
+    } else if (arresto && obiettivoAuto.containsKey("Tenda")) {
+        // Fine del movimento automatico: se si è fermata lontano dall'obiettivo è stata fermata a mano
+        val Integer obiettivo = obiettivoAuto.remove("Tenda")
+        createTimer(now.plusSeconds(5), [|
+            val pos = FGR223_014_BlindsControl.state
+            if (pos instanceof Number && Math::abs((pos as Number).intValue - obiettivo) > TOLLERANZA_POS) {
+                logInfo("Tapparelle", "Tenda fermata a " + pos + "% invece di " + obiettivo + "% (override informativo fino alla prossima fascia)")
+                vTendaOverrideManuale.postUpdate(ON)
+            }
+        ])
     }
 end
