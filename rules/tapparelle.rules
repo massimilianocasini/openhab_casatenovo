@@ -31,8 +31,9 @@ import java.util.Set
 //   - un movimento in direzione opposta a quella attesa (controcomando);
 //   - un arresto con la tapparella lontana dall'obiettivo (fermata a metà).
 // L'override accende vXxxOverrideManuale, che resta ON fino al prossimo
-// cambio fascia. Per la tenda vale la stessa logica ma l'override è solo
-// informativo, perché la tenda viene comandata solo al cambio fascia.
+// cambio fascia. Per la tenda (la FGR223 non riporta la posizione finale) è
+// manuale solo un avvio del motore senza comando automatico in corso; il suo
+// override è informativo, perché la tenda viene comandata solo al cambio fascia.
 // ============================================================================
 
 val int SOGLIA_NOTTE_TAPPARELLE  = -10
@@ -133,14 +134,10 @@ then
             logInfo("Tapparelle", "Cambio fase tenda " + faseTenda + " -> " + nuovaFaseTenda + " (" + el + "°)")
             vFaseTenda.postUpdate(nuovaFaseTenda)
             vTendaOverrideManuale.postUpdate(OFF)
+            // La FGR223 non riporta in modo affidabile la posizione finale: il comando parte sempre
             val int posTenda = if (nuovaFaseTenda == "GIORNO") 0 else 100
-            val attualeTenda = FGR223_014_BlindsControl.state
-            if (attualeTenda instanceof Number && Math::abs((attualeTenda as Number).intValue - posTenda) <= TOLLERANZA_POS) {
-                logInfo("Tapparelle", "Tenda già in posizione (" + attualeTenda + "%)")
-            } else {
-                obiettivoAuto.put("Tenda", posTenda)
-                FGR223_014_BlindsControl.sendCommand(posTenda)
-            }
+            obiettivoAuto.put("Tenda", posTenda)
+            FGR223_014_BlindsControl.sendCommand(posTenda)
         }
     }
 end
@@ -259,18 +256,14 @@ then
     val boolean avvio = watt >= SOGLIA_WATT_TENDA && wattPrec < SOGLIA_WATT_TENDA
     val boolean arresto = watt < SOGLIA_WATT_TENDA && wattPrec >= SOGLIA_WATT_TENDA
 
+    // La FGR223 non riporta la posizione finale, quindi per la tenda si usa solo
+    // l'avvio del motore: è manuale ogni avvio senza comando automatico in corso
+    // (anche la ripartenza dopo un controcomando, perché il primo arresto chiude
+    // il movimento automatico).
     if (avvio && !obiettivoAuto.containsKey("Tenda")) {
         logInfo("Tapparelle", "Movimento manuale sulla tenda (override informativo fino alla prossima fascia)")
         vTendaOverrideManuale.postUpdate(ON)
-    } else if (arresto && obiettivoAuto.containsKey("Tenda")) {
-        // Fine del movimento automatico: se si è fermata lontano dall'obiettivo è stata fermata a mano
-        val Integer obiettivo = obiettivoAuto.remove("Tenda")
-        createTimer(now.plusSeconds(5), [|
-            val pos = FGR223_014_BlindsControl.state
-            if (pos instanceof Number && Math::abs((pos as Number).intValue - obiettivo) > TOLLERANZA_POS) {
-                logInfo("Tapparelle", "Tenda fermata a " + pos + "% invece di " + obiettivo + "% (override informativo fino alla prossima fascia)")
-                vTendaOverrideManuale.postUpdate(ON)
-            }
-        ])
+    } else if (arresto) {
+        obiettivoAuto.remove("Tenda")
     }
 end
