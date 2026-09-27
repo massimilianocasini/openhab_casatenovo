@@ -14,7 +14,7 @@ then
 
     // --- Presa Soggiorno (deodorante) ---
     // Prodino0_optoIn0 == 0 significa antifurto DISINSERITO
-    if (Prodino0_optoIn0.state == "DISINSERITO"  && TimerPresa1Soggiorno.state == ON) {
+    if (Prodino0_optoIn0.state instanceof Number && (Prodino0_optoIn0.state as Number).intValue == 0 && TimerPresa1Soggiorno.state == ON) {
         FGS221_016_SwitchBinary2.sendCommand(ON)
         logInfo("Presa.rules", "Presa soggiorno1 ON perchè Prodino0_optoIn0 è DISINSERITO")
     } else {

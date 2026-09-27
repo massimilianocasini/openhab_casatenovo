@@ -1,0 +1,225 @@
+import org.openhab.core.model.script.ScriptServiceUtil
+import java.util.Map
+import java.time.ZonedDateTime
+
+// ============================================================================
+// Automazione tapparelle, pergotenda e inserimento/disinserimento antifurto.
+//
+// FASCE (item persistiti su mapdb, con isteresi tra le due soglie):
+//   vFaseTapparelle = "GIORNO" / "NOTTE"   (NOTTE sotto -10°, GIORNO da 10°)
+//   vFaseTenda      = "GIORNO" / "NOTTE"   (NOTTE sotto 10°,  GIORNO da 15°)
+//   Al primo avvio (fase NULL) la fase viene solo inizializzata, senza
+//   muovere nulla.
+//
+// CAMBIO FASCIA TAPPARELLE:
+//   - gli override manuali vengono azzerati;
+//   - NOTTE: chiusura di tutte e 4 (sempre, anche ad antifurto inserito);
+//   - GIORNO: apertura al 50% di Soggiorno e Studio, solo ad antifurto
+//     disinserito e non nel weekend/festivi. Letto e Cameretta non vengono
+//     mai riaperte dal cambio fascia.
+//
+// ANTIFURTO (solo in fascia GIORNO, in fascia NOTTE le tapparelle non si
+// muovono):
+//   - inserimento: azzera gli override e chiude tutte e 4;
+//   - disinserimento: apre completamente le tapparelle senza override, a meno
+//     che il disinserimento avvenga entro MINUTI_RIENTRO dall'inserimento
+//     (in quel caso accende solo la luce corridoio).
+//
+// OVERRIDE MANUALE: ogni comando automatico apre per quel dispositivo una
+// finestra di FINESTRA_AUTO_SEC secondi; un movimento che parte fuori dalla
+// finestra è manuale e accende vXxxOverrideManuale, che resta ON fino al
+// prossimo cambio fascia. Per la tenda l'override è solo informativo, perché
+// la tenda viene comandata solo al cambio fascia.
+// ============================================================================
+
+val int SOGLIA_NOTTE_TAPPARELLE  = -10
+val int SOGLIA_GIORNO_TAPPARELLE = 10
+val int SOGLIA_CHIUSURA_TENDA    = 10
+val int SOGLIA_APERTURA_TENDA    = 15
+val int SOGLIA_LUCE_ESTERNA      = 0
+val int SOGLIA_WATT_TENDA        = 2
+val int FINESTRA_AUTO_SEC        = 120
+val int MINUTI_RIENTRO           = 5
+
+// Posizioni: 0 = aperta, 100 = chiusa. Le posizioni notte lasciano passare un po' di luce.
+val Map<String, Integer> POS_NOTTE  = newHashMap("TapparellaLetto" -> 92, "TapparellaStudio" -> 92,
+                                                 "TapparellaSoggiorno" -> 97, "TapparellaCameretta" -> 97)
+val Map<String, Integer> POS_GIORNO = newHashMap("TapparellaSoggiorno" -> 50, "TapparellaStudio" -> 50)
+
+// Istante dell'ultimo comando automatico per dispositivo (tapparelle e "Tenda")
+val Map<String, ZonedDateTime> ultimoComandoAuto = newHashMap
+var Timer timerInserimento = null
+
+// Invia la posizione a una tapparella registrando il comando come automatico.
+// Con rispettaOverride = true la tapparella viene saltata se ha l'override attivo.
+val Procedures$Procedure4<String, Integer, Boolean, Map<String, ZonedDateTime>> muovi = [ nome, pos, rispettaOverride, comandiAuto |
+    if (rispettaOverride && ScriptServiceUtil.getItemRegistry.getItem("v" + nome + "OverrideManuale").state == ON) {
+        logInfo("Tapparelle", nome + " non mossa: override manuale attivo in questa fascia")
+    } else {
+        comandiAuto.put(nome, now)
+        sendCommand(nome, pos.toString)
+        logInfo("Tapparelle", nome + " -> " + pos + "%")
+    }
+]
+
+rule "Tapparelle e tenda - fasce solari"
+when
+    Item SunElevation changed
+then
+    if (!(SunElevation.state instanceof Number)) {
+        logWarn("Tapparelle", "SunElevation non valido (" + SunElevation.state + "), regola ignorata")
+        return;
+    }
+    val double el = (SunElevation.state as Number).doubleValue
+
+    // --- Luce esterna ---
+    if (el <= SOGLIA_LUCE_ESTERNA && FGS222_004_SwitchBinary1.state != ON) {
+        logInfo("Tapparelle", "SunElevation " + el + "°: accendo luce esterna")
+        FGS222_004_SwitchBinary1.sendCommand(ON)
+    } else if (el > SOGLIA_LUCE_ESTERNA && FGS222_004_SwitchBinary1.state != OFF) {
+        logInfo("Tapparelle", "SunElevation " + el + "°: spengo luce esterna")
+        FGS222_004_SwitchBinary1.sendCommand(OFF)
+    }
+
+    // --- Tapparelle ---
+    val String faseTapp = vFaseTapparelle.state.toString
+    if (faseTapp != "GIORNO" && faseTapp != "NOTTE") {
+        val String init = if (el < (SOGLIA_NOTTE_TAPPARELLE + SOGLIA_GIORNO_TAPPARELLE) / 2) "NOTTE" else "GIORNO"
+        logInfo("Tapparelle", "Fase tapparelle inizializzata a " + init + " (" + el + "°), nessun movimento")
+        vFaseTapparelle.postUpdate(init)
+    } else {
+        val String nuovaFaseTapp = if (el < SOGLIA_NOTTE_TAPPARELLE) "NOTTE" else if (el >= SOGLIA_GIORNO_TAPPARELLE) "GIORNO" else faseTapp
+        if (nuovaFaseTapp != faseTapp) {
+            logInfo("Tapparelle", "Cambio fase tapparelle " + faseTapp + " -> " + nuovaFaseTapp + " (" + el + "°)")
+            vFaseTapparelle.postUpdate(nuovaFaseTapp)
+            POS_NOTTE.keySet.forEach[ nome | postUpdate("v" + nome + "OverrideManuale", "OFF") ]
+
+            val boolean antifurtoInserito = Prodino0_optoIn0.state instanceof Number && (Prodino0_optoIn0.state as Number).intValue == 1
+            if (nuovaFaseTapp == "NOTTE") {
+                POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+            } else if (antifurtoInserito) {
+                logInfo("Tapparelle", "Apertura mattutina saltata: antifurto inserito")
+            } else if (isWeekend() || isBankHoliday()) {
+                logInfo("Tapparelle", "Apertura mattutina saltata: weekend o festivo")
+            } else {
+                POS_GIORNO.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+            }
+        }
+    }
+
+    // --- Tenda (indipendente dall'antifurto) ---
+    val String faseTenda = vFaseTenda.state.toString
+    if (faseTenda != "GIORNO" && faseTenda != "NOTTE") {
+        val String init = if (el < (SOGLIA_CHIUSURA_TENDA + SOGLIA_APERTURA_TENDA) / 2) "NOTTE" else "GIORNO"
+        logInfo("Tapparelle", "Fase tenda inizializzata a " + init + " (" + el + "°), nessun movimento")
+        vFaseTenda.postUpdate(init)
+    } else {
+        val String nuovaFaseTenda = if (el < SOGLIA_CHIUSURA_TENDA) "NOTTE" else if (el >= SOGLIA_APERTURA_TENDA) "GIORNO" else faseTenda
+        if (nuovaFaseTenda != faseTenda) {
+            logInfo("Tapparelle", "Cambio fase tenda " + faseTenda + " -> " + nuovaFaseTenda + " (" + el + "°)")
+            vFaseTenda.postUpdate(nuovaFaseTenda)
+            vTendaOverrideManuale.postUpdate(OFF)
+            ultimoComandoAuto.put("Tenda", now)
+            FGR223_014_BlindsControl.sendCommand(if (nuovaFaseTenda == "GIORNO") 0 else 100)
+        }
+    }
+end
+
+rule "Antifurto - inserimento e disinserimento"
+when
+    Item Prodino0_optoIn0 changed
+then
+    if (!(newState instanceof Number)) return;
+    val telegramActions = getActions("telegram", "telegram:telegramBot:casatenovo")
+    val boolean giorno = vFaseTapparelle.state.toString == "GIORNO"
+
+    if ((newState as Number).intValue == 1) {
+        logInfo("Antifurto", "Antifurto INSERITO")
+        if (telegramActions !== null) telegramActions.sendTelegram("Antifurto INSerito!")
+        sendNotification("massimiliano.casini@gmail.com", "Antifurto INSerito")
+
+        if (timerInserimento === null) {
+            timerInserimento = createTimer(now.plusMinutes(MINUTI_RIENTRO), [|
+                timerInserimento = null
+                logInfo("Antifurto", "Timer su inserimento scaduto, da ora un disinserimento in fascia GIORNO riapre le tapparelle")
+            ])
+        } else {
+            timerInserimento.reschedule(now.plusMinutes(MINUTI_RIENTRO))
+        }
+
+        FGS221_016_SwitchBinary2.sendCommand(OFF) // Presa1 soggiorno
+        Osram01S.sendCommand(OFF)                 // Luce natale
+        FGD211_003_SwitchDimmer.sendCommand(0)    // Luce corridoio
+        SonosEraStudio_Control.sendCommand(PAUSE)
+        SonosEraLetto_Control.sendCommand(PAUSE)
+        SonosBeam_Control.sendCommand(PAUSE)
+
+        // Condizionatori in riscaldamento
+        #["Studio", "Soggiorno", "Cameretta", "Letto"].forEach[ stanza |
+            val power = ScriptServiceUtil.getItemRegistry.getItem("DaikinACUnit_Power_" + stanza)
+            val mode = ScriptServiceUtil.getItemRegistry.getItem("DaikinACUnit_Mode_" + stanza)
+            if (mode.state.toString == "HEAT" && power.state == ON) {
+                sendCommand(power.name, "OFF")
+                logInfo("Antifurto", "Condizionatore " + stanza + " spento")
+                if (telegramActions !== null) telegramActions.sendTelegram("Condizionatore " + stanza + " spento")
+            }
+        ]
+
+        if (giorno) {
+            logInfo("Antifurto", "Fascia GIORNO: chiudo tutte le tapparelle e azzero gli override")
+            POS_NOTTE.keySet.forEach[ nome | postUpdate("v" + nome + "OverrideManuale", "OFF") ]
+            POS_NOTTE.forEach[ nome, pos | muovi.apply(nome, pos, false, ultimoComandoAuto) ]
+        } else {
+            logInfo("Antifurto", "Fascia NOTTE: tapparelle non mosse")
+        }
+    } else {
+        logInfo("Antifurto", "Antifurto DISINSERITO")
+        if (telegramActions !== null) telegramActions.sendTelegram("Antifurto DISInserito!")
+        sendNotification("massimiliano.casini@gmail.com", "Antifurto DISInserito")
+
+        if (timerInserimento !== null) {
+            timerInserimento.cancel()
+            timerInserimento = null
+            FGD211_003_SwitchDimmer.sendCommand(60)
+            logInfo("Antifurto", "Disinserito entro " + MINUTI_RIENTRO + " min dall'inserimento: solo luce corridoio")
+        } else if (giorno) {
+            logInfo("Antifurto", "Fascia GIORNO: apro le tapparelle senza override")
+            POS_NOTTE.keySet.forEach[ nome | muovi.apply(nome, 0, true, ultimoComandoAuto) ]
+        } else {
+            logInfo("Antifurto", "Fascia NOTTE: tapparelle non mosse")
+        }
+    }
+end
+
+rule "Tapparelle - rileva movimento manuale"
+when
+    Item TapparellaLettoStatus changed or
+    Item TapparellaStudioStatus changed or
+    Item TapparellaSoggiornoStatus changed or
+    Item TapparellaCamerettaStatus changed
+then
+    // Shelly gen1 (Letto, Studio): open/close; Shelly Plus (Soggiorno, Cameretta): opening/closing
+    if (!#["open", "close", "opening", "closing"].contains(newState.toString)) return;
+    val String nome = triggeringItemName.replace("Status", "")
+    val ZonedDateTime ultimo = ultimoComandoAuto.get(nome)
+    if (ultimo === null || now.isAfter(ultimo.plusSeconds(FINESTRA_AUTO_SEC))) {
+        logInfo("Tapparelle", "Movimento manuale su " + nome + ": esclusa dall'automazione fino alla prossima fascia")
+        postUpdate("v" + nome + "OverrideManuale", "ON")
+    }
+end
+
+rule "Tenda - rileva movimento manuale"
+when
+    Item FGR223_014_MeterWatts changed
+then
+    if (!(newState instanceof Number)) return;
+    val double watt = (newState as Number).doubleValue
+    val double wattPrec = if (previousState instanceof Number) (previousState as Number).doubleValue else 0
+    // Solo all'avvio del motore (passaggio sopra soglia)
+    if (watt < SOGLIA_WATT_TENDA || wattPrec >= SOGLIA_WATT_TENDA) return;
+    val ZonedDateTime ultimo = ultimoComandoAuto.get("Tenda")
+    if (ultimo === null || now.isAfter(ultimo.plusSeconds(FINESTRA_AUTO_SEC))) {
+        logInfo("Tapparelle", "Movimento manuale sulla tenda (override informativo fino alla prossima fascia)")
+        vTendaOverrideManuale.postUpdate(ON)
+    }
+end
