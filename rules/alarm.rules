@@ -39,6 +39,12 @@ rule "Mancanza rete"
 when
     Item Prodino0_optoIn2 changed
 then
+  // All'avvio di openHAB o alla riconnessione del Prodino l'ingresso passa da NULL/UNDEF a 0:
+  // non è un ripristino della rete (e Pushover potrebbe non essere ancora pronto)
+  if ((previousState == NULL || previousState == UNDEF) && newState instanceof Number && (newState as Number).intValue == 0) {
+    logInfo("Rule Alarm", "Rete 220V presente all'avvio/riconnessione del Prodino, nessuna notifica")
+    return;
+  }
   val pushoverActions = getActions("pushover", "pushover:pushover-account:account")
   val telegramActions = getActions("telegram","telegram:telegramBot:casatenovo")
   if ((Prodino0_optoIn2.state as Number) == 1) {      // Mancanza 220V
