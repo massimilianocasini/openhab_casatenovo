@@ -10,6 +10,8 @@ import java.util.Set
 //   vFaseTenda      = "GIORNO" / "NOTTE"   (NOTTE sotto 10°,  GIORNO da 15°)
 //   Al primo avvio (fase NULL) la fase viene solo inizializzata, senza
 //   muovere nulla.
+//   Con vTendaAutomatica = OFF la fase tenda continua a essere aggiornata ma
+//   la tenda non viene mai comandata (periodi in cui deve restare chiusa).
 //
 // CAMBIO FASCIA TAPPARELLE:
 //   - gli override manuali vengono azzerati;
@@ -134,10 +136,14 @@ then
             logInfo("Tapparelle", "Cambio fase tenda " + faseTenda + " -> " + nuovaFaseTenda + " (" + el + "°)")
             vFaseTenda.postUpdate(nuovaFaseTenda)
             vTendaOverrideManuale.postUpdate(OFF)
-            // La FGR223 non riporta in modo affidabile la posizione finale: il comando parte sempre
-            val int posTenda = if (nuovaFaseTenda == "GIORNO") 0 else 100
-            obiettivoAuto.put("Tenda", posTenda)
-            FGR223_014_BlindsControl.sendCommand(posTenda)
+            if (vTendaAutomatica.state == OFF) {
+                logInfo("Tapparelle", "Movimento automatico pergotenda disattivato: tenda non mossa")
+            } else {
+                // La FGR223 non riporta in modo affidabile la posizione finale: il comando parte sempre
+                val int posTenda = if (nuovaFaseTenda == "GIORNO") 0 else 100
+                obiettivoAuto.put("Tenda", posTenda)
+                FGR223_014_BlindsControl.sendCommand(posTenda)
+            }
         }
     }
 end

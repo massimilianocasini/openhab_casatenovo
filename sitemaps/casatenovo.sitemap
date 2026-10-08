@@ -189,6 +189,7 @@ sitemap casatenovo label="Benvenuto a Casa"
 		Text label="Giardino" icon="garden" {
 			Default item=FGR223_014_BlindsControl
 			Switch item=FGR223_014_BlindsControl  mappings=[0="Aperta", 100="Chiusa"]
+			Switch item=vTendaAutomatica
 		}
 		Text label="Portone" icon="cellar" {
 			Switch item=FGS222_004_SwitchBinary1 mappings=[ON=ACCESO, OFF=SPENTO]
