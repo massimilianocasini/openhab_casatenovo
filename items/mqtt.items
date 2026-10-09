@@ -15,5 +15,5 @@ Switch ResetContatoreAcqua "Reset contatore acqua []" (gValve) ["Control", "Wate
 Switch ElettrovalvolaAcqua "Elettrovalvola acqua []" (gValve) ["Switch", "Water"] {channel="mqtt:topic:cm4home:flussometro:elettrovalvola", stateDescription="" [options="OFF=APERTA, ON=CHIUSA"]}
 Switch Tasmota_LWT "Stato Flussometro [%s]" (gValve, gMQTT) ["Status"] {channel="mqtt:topic:cm4home:flussometro:tasmota_lwt", stateDescription="" [options="OFF=OFFLINE, ON=ONLINE"]}
 
-Number:Dimensionless esp32c3d1_co2  "Qualità aria Studio CO2 [%.0f ppm]"  <carbondioxide> (gInfluxdb) ["Measurement", "CO2"] {unit="ppm", channel="mqtt:topic:cm4home:esp32c3d1:co2"}
-Number:Dimensionless esp32c3d1_tvoc "Total Volatile Organic Compounds Studio [%.0f ppb]" <smoke> (gInfluxdb) ["Measurement", "VOC"] {unit="ppb", channel="mqtt:topic:cm4home:esp32c3d1:tvoc"}
+Number:Dimensionless esp32c3d1_co2  "Qualità aria Studio CO2 [%.0f ppm]"  <carbondioxide> (gInfluxdbFast) ["Measurement", "CO2"] {unit="ppm", channel="mqtt:topic:cm4home:esp32c3d1:co2"}
+Number:Dimensionless esp32c3d1_tvoc "Total Volatile Organic Compounds Studio [%.0f ppb]" <smoke> (gInfluxdbFast) ["Measurement", "VOC"] {unit="ppb", channel="mqtt:topic:cm4home:esp32c3d1:tvoc"}
