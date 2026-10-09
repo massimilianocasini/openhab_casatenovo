@@ -24,6 +24,8 @@ Items
 	//gAvgUmidita* : strategy = everyMinute, restoreOnStartup
 	//gAvgPressione : strategy = everyMinute, restoreOnStartup
 	//gAVGDaikinTemp : strategy = everyMinute, restoreOnStartup
+	gInfluxdbFast* : strategy = everyMinute, restoreOnStartup
+	gInfluxdbChange* : strategy = everyChange, restoreOnStartup
 	gSpeedtest* : strategy = everyChange, restoreOnStartup
 	//gRadar*: strategy =  everyChange, restoreOnStartup
 	//SCD40_AirQuality1: strategy = everyChange, restoreOnStartup

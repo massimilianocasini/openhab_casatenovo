@@ -1,5 +1,7 @@
 Group gInfluxdb
 Group gInfluxdb1
+Group gInfluxdbFast
+Group gInfluxdbChange
 Group:Number:AVG gAvgTemperatura "Temperatura media interna [%.1f °C]" <temperature> (gPianoterra)
 Group gAstroRadation "Astro" 
 Group gWeather "Che tempo che fa" ["WeatherService"]
