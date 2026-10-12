@@ -1,0 +1,30 @@
+// ============================================================================
+// Correzione posizione a fine corsa per le Shelly Plus 2PM (Soggiorno, Cameretta).
+//
+// Con firmware 1.7.5 la Shelly calcola correttamente la posizione (current_pos
+// 100 = aperta, 0 = chiusa), ma il binding aggiorna roller#control e
+// roller#rollerpos solo quando la tapparella si ferma a metà corsa: all'arrivo
+// sul finecorsa aggiorna solo lo stato (open/close) e la posizione resta
+// all'ultimo valore intermedio.
+//
+// Per le Shelly Plus gli stati "open" e "close" sono i fine corsa, quindi qui
+// la posizione viene riallineata:
+//   open  -> TapparellaXxx = 0,   TapparellaXxxPosition = 100
+//   close -> TapparellaXxx = 100, TapparellaXxxPosition = 0
+// (le Shelly gen1 di Letto e Studio usano open/close durante il movimento e
+// non sono coinvolte).
+// ============================================================================
+
+rule "Shelly Plus - posizione a fine corsa"
+when
+    Item TapparellaSoggiornoStatus changed to "open" or
+    Item TapparellaSoggiornoStatus changed to "close" or
+    Item TapparellaCamerettaStatus changed to "open" or
+    Item TapparellaCamerettaStatus changed to "close"
+then
+    val String nome = triggeringItemName.replace("Status", "")
+    val boolean aperta = newState.toString == "open"
+    postUpdate(nome, if (aperta) "0" else "100")
+    postUpdate(nome + "Position", if (aperta) "100" else "0")
+    logInfo("Shelly", nome + " a fine corsa (" + newState + "): posizione riallineata a " + (if (aperta) "0" else "100") + "%")
+end
