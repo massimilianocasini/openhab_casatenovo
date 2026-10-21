@@ -14,11 +14,13 @@ import java.util.Set
 //   la tenda non viene mai comandata (periodi in cui deve restare chiusa).
 //
 // CAMBIO FASCIA TAPPARELLE:
-//   - gli override manuali vengono azzerati;
-//   - NOTTE: chiusura di tutte e 4 (sempre, anche ad antifurto inserito);
+//   - NOTTE: chiusura di tutte e 4 (sempre, anche ad antifurto inserito e
+//     anche con override manuale);
 //   - GIORNO: apertura al 50% di Soggiorno e Studio, solo ad antifurto
-//     disinserito e non nel weekend/festivi. Letto e Cameretta non vengono
-//     mai riaperte dal cambio fascia.
+//     disinserito e non nel weekend/festivi, saltando le tapparelle con
+//     override manuale. Letto e Cameretta non vengono mai riaperte dal
+//     cambio fascia;
+//   - dopo i movimenti gli override manuali vengono azzerati.
 //
 // ANTIFURTO (solo in fascia GIORNO, in fascia NOTTE le tapparelle non si
 // muovono):
@@ -109,7 +111,6 @@ then
         if (nuovaFaseTapp != faseTapp) {
             logInfo("Tapparelle", "Cambio fase tapparelle " + faseTapp + " -> " + nuovaFaseTapp + " (" + el + "°)")
             vFaseTapparelle.postUpdate(nuovaFaseTapp)
-            POS_NOTTE.keySet.forEach[ nome | postUpdate("v" + nome + "OverrideManuale", "OFF") ]
 
             val boolean antifurtoInserito = Prodino0_optoIn0.state instanceof Number && (Prodino0_optoIn0.state as Number).intValue == 1
             if (nuovaFaseTapp == "NOTTE") {
@@ -119,8 +120,10 @@ then
             } else if (isWeekend() || isBankHoliday()) {
                 logInfo("Tapparelle", "Apertura mattutina saltata: weekend o festivo")
             } else {
-                POS_GIORNO.forEach[ nome, pos | muovi.apply(nome, pos, false, obiettivoAuto, direzioneAuto) ]
+                POS_GIORNO.forEach[ nome, pos | muovi.apply(nome, pos, true, obiettivoAuto, direzioneAuto) ]
             }
+            // Azzeramento dopo i movimenti: l'apertura mattutina deve ancora vedere gli override della fascia precedente
+            POS_NOTTE.keySet.forEach[ nome | postUpdate("v" + nome + "OverrideManuale", "OFF") ]
         }
     }
 
