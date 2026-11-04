@@ -1,0 +1,5 @@
+Bridge ocpp:server:main [ port=8887 ] {
+    Bridge chargepoint wallbox "Wallbox" [ chargePointId="wallbox" ] {
+        Thing connector c1 "Connector 1" [ connectorId=1 ]
+    }
+}
