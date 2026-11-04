@@ -20,7 +20,10 @@ Items
 {
 	//gInfluxdb* : strategy =  everyChange, everyHour, restoreOnStartup
 	//gInfluxdb1* : strategy =  everyMinute, restoreOnStartup
-	gAvgTemperatura, gAvgPressione, gAvgUmidita, gAvgTemperatura*, gAvgUmidita*, gAvgPressione*, gBattery*, gInfluxdb*  : strategy = everyUpdate, restoreOnStartup
+	// everyUpdate sostituito (04/11/2026): troppe scritture su SD -> timeout InfluxDB.
+	// everyChange + everyMinute mantiene grafici continui con al massimo ~1 scrittura/minuto per valori stabili.
+	gAvgTemperatura, gAvgPressione, gAvgUmidita, gAvgTemperatura*, gAvgUmidita*, gAvgPressione*, gInfluxdb*  : strategy = everyChange, everyMinute, restoreOnStartup
+	gBattery* : strategy = everyChange, restoreOnStartup
 	//gAvgUmidita* : strategy = everyMinute, restoreOnStartup
 	//gAvgPressione : strategy = everyMinute, restoreOnStartup
 	//gAVGDaikinTemp : strategy = everyMinute, restoreOnStartup
