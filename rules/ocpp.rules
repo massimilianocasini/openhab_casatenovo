@@ -3,9 +3,10 @@ var java.time.ZonedDateTime fermoDa = null
 // Minuti minimi di fermo prima di far ripartire la carica
 val int minutiFermo = 2
 
-// Limiti della wallbox in A: sotto i 6 l'auto non carica, 19 A ≈ 4.4 kW
+// Limiti della wallbox in A: sotto i 6 l'auto non carica, 30 A ≈ 7 kW.
+// Senza fotovoltaico il limite dei 4.5 kW tiene comunque la wallbox sotto i 19 A
 val int ampsMin = 6
-val int ampsMax = 19
+val int ampsMax = 30
 
 rule "Uso della potenza disponibile per limitare la potenza della wallbox"
 when
