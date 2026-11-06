@@ -2,11 +2,18 @@
 var java.time.ZonedDateTime fermoDa = null
 // Minuti minimi di fermo prima di far ripartire la carica
 val int minutiFermo = 2
+// Momento dell'ultimo cambio di limite (null se nessuno)
+var java.time.ZonedDateTime ultimoComando = null
+// Secondi dopo un cambio di limite in cui Wallbox_Power può essere ancora vecchio
+// (la wallbox lo manda ogni meterValueSampleInterval = 10 s)
+val int secondiAssestamento = 30
 
 // Limiti della wallbox in A: sotto i 6 l'auto non carica, 30 A ≈ 7 kW.
 // Senza fotovoltaico il limite dei 4.5 kW tiene comunque la wallbox sotto i 19 A
 val int ampsMin = 6
 val int ampsMax = 30
+// Prelievo massimo dalla rete (contratto)
+val double contrattoW = 4500.0
 
 rule "Uso della potenza disponibile per limitare la potenza della wallbox"
 when
@@ -18,29 +25,44 @@ then
 
     // Potenza scambiata con la rete in W: negativa = prelievo, positiva = immissione
     val scambioW = (M_Total_Real_Power_Value.state as QuantityType<Number>).toUnit("W").doubleValue
-    // Per ora la wallbox non è misurata dal contatore SolarEdge. Quando lo sarà, togliere il
-    // commento qui sotto, così il suo assorbimento viene sottratto dal consumo della casa
+    val prelievoW = -scambioW
+    // La wallbox è misurata dal contatore SolarEdge: il suo assorbimento va tolto dal consumo della casa
     var double wallboxW = 0
-    // if (Wallbox_Power.state instanceof QuantityType) {
-    //     wallboxW = (Wallbox_Power.state as QuantityType<Number>).toUnit("W").doubleValue
-    // }
+    if (Wallbox_Power.state instanceof QuantityType) {
+        wallboxW = (Wallbox_Power.state as QuantityType<Number>).toUnit("W").doubleValue
+    }
+
+    // Tensione reale misurata dal contatore per convertire i watt in ampere (230 V se manca)
+    var double voltV = 230.0
+    if (M_Average_Line_To_Neutral_AC_Voltage.state instanceof QuantityType) {
+        val v = (M_Average_Line_To_Neutral_AC_Voltage.state as QuantityType<Number>).toUnit("V").doubleValue
+        if (v > 180 && v < 260) voltV = v
+    }
 
     // Consumo della casa senza la wallbox, e quanto resta entro i 4.5 kW di contratto
-    val casaW = -scambioW - wallboxW
-    val disponibileW = 4500.0 - casaW
+    val casaW = prelievoW - wallboxW
+    val disponibileW = contrattoW - casaW
     // Limite attuale (0 se non ancora noto)
     var int attuale = 0
     if (Wallbox_Limit.state instanceof QuantityType) {
         attuale = (Wallbox_Limit.state as QuantityType<Number>).intValue
     }
 
-    // Isteresi: si scende subito per non superare il contratto, si sale solo
-    // se avanzano almeno isteresiW oltre il gradino successivo
-    val isteresiW = 150.0
-    var int amps = Math::floor(disponibileW / 230.0).intValue
-    if (amps > attuale) {
-        amps = Math::floor((disponibileW - isteresiW) / 230.0).intValue
-        if (amps < attuale) amps = attuale
+    var int amps = attuale
+    if (ultimoComando !== null && now.isBefore(ultimoComando.plusSeconds(secondiAssestamento))) {
+        // Assestamento: Wallbox_Power può non essere ancora aggiornato, quindi si interviene solo
+        // se il prelievo reale supera il contratto, togliendo esattamente l'eccesso
+        if (prelievoW <= contrattoW) return;
+        amps = attuale - Math::ceil((prelievoW - contrattoW) / voltV).intValue
+    } else {
+        // Isteresi: si scende subito per non superare il contratto, si sale solo
+        // se avanzano almeno isteresiW oltre il gradino successivo
+        val isteresiW = 150.0
+        amps = Math::floor(disponibileW / voltV).intValue
+        if (amps > attuale) {
+            amps = Math::floor((disponibileW - isteresiW) / voltV).intValue
+            if (amps < attuale) amps = attuale
+        }
     }
     // Sotto i 6 A l'auto non può caricare senza superare i 4.5 kW: 0 A ferma la carica
     // (SuspendedEVSE), riparte da sola quando tornano almeno 6 A più l'isteresi
@@ -53,6 +75,7 @@ then
     // Invia solo se il limite cambia
     if (amps == attuale) return;
     if (amps == 0) fermoDa = now else fermoDa = null
-    logInfo("rules ocpp", "Casa: " + casaW.intValue + " W, disponibile: " + disponibileW.intValue + " W -> limite " + amps + " A")
+    ultimoComando = now
+    logInfo("rules ocpp", "Prelievo: " + prelievoW.intValue + " W, wallbox: " + wallboxW.intValue + " W, casa: " + casaW.intValue + " W, disponibile: " + disponibileW.intValue + " W, tensione: " + voltV.intValue + " V -> limite " + amps + " A")
     Wallbox_Limit.sendCommand(amps)
 end
