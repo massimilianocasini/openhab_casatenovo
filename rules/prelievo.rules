@@ -1,0 +1,148 @@
+// Gestione del prelievo dalla rete (contratto 4.5 kW): wallbox, allarme e condizionatori.
+// Il contatore SolarEdge misura lo scambio sul punto di consegna, wallbox compresa.
+// Quando si supera il contratto si riduce prima la wallbox; solo se non basta
+// si suona l'allarme e si spengono i condizionatori.
+
+// Momento in cui la carica è stata fermata con 0 A (null se non è ferma)
+var java.time.ZonedDateTime fermoDa = null
+// Minuti minimi di fermo prima di far ripartire la carica
+val int minutiFermo = 2
+// Momento dell'ultimo cambio di limite (null se nessuno)
+var java.time.ZonedDateTime ultimoComando = null
+// Secondi dopo un cambio di limite in cui Wallbox_Power può essere ancora vecchio
+// (la wallbox lo manda ogni meterValueSampleInterval = 10 s)
+val int secondiAssestamento = 30
+
+// Limiti della wallbox in A: sotto i 6 l'auto non carica, 30 A ≈ 7 kW.
+// Senza fotovoltaico il limite dei 4.5 kW tiene comunque la wallbox sotto i 19 A
+val int ampsMin = 6
+val int ampsMax = 30
+// Prelievo massimo dalla rete (contratto)
+val double contrattoW = 4500.0
+
+// Oltre questa soglia, se anche fermando la wallbox la casa resta sopra, l'allarme è immediato
+val double sogliaImmediataW = 5500.0
+// Minuti oltre il contratto (con la wallbox già ridotta) prima dell'allarme
+val int minutiAllarme = 3
+var Timer timerAllarme = null
+// Momento dell'ultimo allarme immediato: non si ripete prima di minutiTraAllarmi
+var java.time.ZonedDateTime ultimoAllarme = null
+val int minutiTraAllarmi = 1
+
+// Allarme sonoro e spegnimento dei condizionatori
+val allarmeAssorbimento = [ |
+    MiniKitchenVolume.sendCommand(50)
+    MiniStudioVolume.sendCommand(50)
+    MiniBedroom2Volume.sendCommand(50)
+    playSound("chromecast:chromecast:cc25fe1915b7c21d6172f95b88e8a10f", "AllarmeAssorbimento.mp3") //Studio
+    playSound("chromecast:chromecast:787ead6c61b2b7b065a993a4805dabec", "AllarmeAssorbimento.mp3") //Cucina
+    playSound("chromecast:chromecast:9b55f1ed89e3305085bcdb2b99f6c06e", "AllarmeAssorbimento.mp3") //Cameretta
+    DaikinACUnit_Power_Studio.sendCommand(OFF)
+    DaikinACUnit_Power_Cameretta.sendCommand(OFF)
+    DaikinACUnit_Power_Letto.sendCommand(OFF)
+    DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
+]
+
+rule "Gestione del prelievo da rete: wallbox e condizionatori"
+when
+    Item M_Total_Real_Power_Value changed
+then
+    if (!(M_Total_Real_Power_Value.state instanceof QuantityType)) return;
+    // Potenza scambiata con la rete: negativa = prelievo, positiva = immissione
+    val prelievoW = -(M_Total_Real_Power_Value.state as QuantityType<Number>).toUnit("W").doubleValue
+
+    // Wallbox: conta solo durante una transazione (altrimenti Wallbox_Power può essere vecchio)
+    val stato = Wallbox_Status.state.toString
+    val inCarica = stato == "Charging" || stato == "SuspendedEVSE" || stato == "SuspendedEV"
+    var double wallboxW = 0
+    if (inCarica && Wallbox_Power.state instanceof QuantityType) {
+        wallboxW = (Wallbox_Power.state as QuantityType<Number>).toUnit("W").doubleValue
+    }
+    // Consumo della casa senza la wallbox: è quello che resta anche fermando la carica
+    val casaW = prelievoW - wallboxW
+
+    // ---- 1. Allarme e condizionatori ----
+    if (casaW > sogliaImmediataW) {
+        // Anche a wallbox ferma si resta oltre la soglia: intervento immediato
+        if (timerAllarme !== null) {
+            timerAllarme.cancel()
+            timerAllarme = null
+        }
+        if (ultimoAllarme === null || now.isAfter(ultimoAllarme.plusMinutes(minutiTraAllarmi))) {
+            ultimoAllarme = now
+            logWarn("rules prelievo", "Allarme immediato: prelievo " + prelievoW.intValue + " W, casa senza wallbox " + casaW.intValue + " W")
+            allarmeAssorbimento.apply()
+        }
+    } else if (prelievoW > contrattoW) {
+        // Oltre il contratto: la wallbox (sotto) si riduce subito; se dopo minutiAllarme
+        // il prelievo è ancora oltre, la colpa è della casa e si spengono i condizionatori
+        if (timerAllarme === null) {
+            logInfo("rules prelievo", "Prelievo " + prelievoW.intValue + " W oltre il contratto: allarme tra " + minutiAllarme + " minuti se non rientra")
+            timerAllarme = createTimer(now.plusMinutes(minutiAllarme), [ |
+                timerAllarme = null
+                if (M_Total_Real_Power_Value.state instanceof QuantityType) {
+                    val p = -(M_Total_Real_Power_Value.state as QuantityType<Number>).toUnit("W").doubleValue
+                    if (p > contrattoW) {
+                        logWarn("rules prelievo", "Allarme: prelievo ancora a " + p.intValue + " W dopo " + minutiAllarme + " minuti")
+                        allarmeAssorbimento.apply()
+                    }
+                }
+            ])
+        }
+    } else if (timerAllarme !== null) {
+        // Rientrato sotto il contratto (o in immissione): annullo l'allarme
+        logInfo("rules prelievo", "Prelievo rientrato a " + prelievoW.intValue + " W: allarme annullato")
+        timerAllarme.cancel()
+        timerAllarme = null
+    }
+
+    // ---- 2. Regolazione della wallbox ----
+    // Solo durante una transazione: alcuni charger vanno in SuspendedEVSE se il limite arriva prima
+    if (!inCarica) return;
+
+    // Tensione reale misurata dal contatore per convertire i watt in ampere (230 V se manca)
+    var double voltV = 230.0
+    if (M_Average_Line_To_Neutral_AC_Voltage.state instanceof QuantityType) {
+        val v = (M_Average_Line_To_Neutral_AC_Voltage.state as QuantityType<Number>).toUnit("V").doubleValue
+        if (v > 180 && v < 260) voltV = v
+    }
+
+    // Quanto resta alla wallbox entro i 4.5 kW di contratto
+    val disponibileW = contrattoW - casaW
+    // Limite attuale (0 se non ancora noto)
+    var int attuale = 0
+    if (Wallbox_Limit.state instanceof QuantityType) {
+        attuale = (Wallbox_Limit.state as QuantityType<Number>).intValue
+    }
+
+    var int amps = attuale
+    if (ultimoComando !== null && now.isBefore(ultimoComando.plusSeconds(secondiAssestamento))) {
+        // Assestamento: Wallbox_Power può non essere ancora aggiornato, quindi si interviene solo
+        // se il prelievo reale supera il contratto, togliendo esattamente l'eccesso
+        if (prelievoW <= contrattoW) return;
+        amps = attuale - Math::ceil((prelievoW - contrattoW) / voltV).intValue
+    } else {
+        // Isteresi: si scende subito per non superare il contratto, si sale solo
+        // se avanzano almeno isteresiW oltre il gradino successivo
+        val isteresiW = 150.0
+        amps = Math::floor(disponibileW / voltV).intValue
+        if (amps > attuale) {
+            amps = Math::floor((disponibileW - isteresiW) / voltV).intValue
+            if (amps < attuale) amps = attuale
+        }
+    }
+    // Sotto i 6 A l'auto non può caricare senza superare i 4.5 kW: 0 A ferma la carica
+    // (SuspendedEVSE), riparte da sola quando tornano almeno 6 A più l'isteresi
+    if (amps < ampsMin) amps = 0
+    if (amps > ampsMax) amps = ampsMax
+
+    // Dopo una fermata si riparte solo trascorsi minutiFermo minuti
+    if (attuale == 0 && amps > 0 && fermoDa !== null && now.isBefore(fermoDa.plusMinutes(minutiFermo))) return;
+
+    // Invia solo se il limite cambia
+    if (amps == attuale) return;
+    if (amps == 0) fermoDa = now else fermoDa = null
+    ultimoComando = now
+    logInfo("rules prelievo", "Prelievo: " + prelievoW.intValue + " W, wallbox: " + wallboxW.intValue + " W, casa: " + casaW.intValue + " W, disponibile: " + disponibileW.intValue + " W, tensione: " + voltV.intValue + " V -> limite " + amps + " A")
+    Wallbox_Limit.sendCommand(amps)
+end
