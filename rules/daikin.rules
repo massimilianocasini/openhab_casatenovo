@@ -33,8 +33,8 @@ then
           myTimer_daikin = createTimer(now.plusSeconds(15), [|
             logInfo("rules", "Timer HEAT created")
             gEqCondMode.sendCommand("HEAT")
-            gEqCondSetPoint.sendCommand(22)
-            logInfo("CondMode", "Forzato passaggio a HEAT a 22° di tutti i condizionatori")
+            gEqCondSetPoint.sendCommand(23)
+            logInfo("CondMode", "Forzato passaggio a HEAT a 23° di tutti i condizionatori")
             myTimer_daikin = null
           ])
           }
