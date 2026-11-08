@@ -7,6 +7,12 @@
 var java.time.ZonedDateTime fermoDa = null
 // Minuti minimi di fermo prima di far ripartire la carica
 val int minutiFermo = 2
+// Per ripartire da 0 A la potenza disponibile deve superare i 6 A più questo margine
+// in modo continuo per minutiStabile minuti (evita accendi/spegni con i carichi che ciclano)
+val double margineRipartenzaW = 300.0
+val int minutiStabile = 5
+// Da quando la potenza disponibile è continuamente sopra la soglia di ripartenza (null se non lo è)
+var java.time.ZonedDateTime stabileDa = null
 // Momento dell'ultimo cambio di limite (null se nessuno)
 var java.time.ZonedDateTime ultimoComando = null
 // Secondi dopo un cambio di limite in cui Wallbox_Power può essere ancora vecchio
@@ -97,8 +103,14 @@ then
     }
 
     // ---- 2. Regolazione della wallbox ----
-    // Solo durante una transazione: alcuni charger vanno in SuspendedEVSE se il limite arriva prima
-    if (!inCarica) return;
+    // Comandi solo con il cavo collegato e durante una transazione (alcuni charger vanno in
+    // SuspendedEVSE se il limite arriva prima). SuspendedEVSE resta ammesso perché è lo stato in cui
+    // la mette lo 0 A di questa regola e serve per ripartire; in SuspendedEV l'auto non assorbe
+    // (carica completa o pausa sua) e non si inviano limiti
+    if (Wallbox_Cable.state != ON || (stato != "Charging" && stato != "SuspendedEVSE")) {
+        stabileDa = null
+        return;
+    }
 
     // Tensione reale misurata dal contatore per convertire i watt in ampere (230 V se manca)
     var double voltV = 230.0
@@ -113,6 +125,22 @@ then
     var int attuale = 0
     if (Wallbox_Limit.state instanceof QuantityType) {
         attuale = (Wallbox_Limit.state as QuantityType<Number>).intValue
+    }
+
+    // Ripartenza da 0 A: dopo almeno minutiFermo di fermo e solo se da minutiStabile minuti
+    // la potenza disponibile resta sopra i 6 A più il margine
+    if (attuale == 0) {
+        if (disponibileW < ampsMin * voltV + margineRipartenzaW) {
+            if (stabileDa !== null) logInfo("rules prelievo", "Disponibile sceso a " + disponibileW.intValue + " W: ripartenza annullata")
+            stabileDa = null
+            return;
+        }
+        if (stabileDa === null) {
+            stabileDa = now
+            logInfo("rules prelievo", "Disponibile " + disponibileW.intValue + " W: ripartenza tra " + minutiStabile + " minuti se resta sopra " + (ampsMin * voltV + margineRipartenzaW).intValue + " W")
+        }
+        if (now.isBefore(stabileDa.plusMinutes(minutiStabile))) return;
+        if (fermoDa !== null && now.isBefore(fermoDa.plusMinutes(minutiFermo))) return;
     }
 
     var int amps = attuale
@@ -136,12 +164,14 @@ then
     if (amps < ampsMin) amps = 0
     if (amps > ampsMax) amps = ampsMax
 
-    // Dopo una fermata si riparte solo trascorsi minutiFermo minuti
-    if (attuale == 0 && amps > 0 && fermoDa !== null && now.isBefore(fermoDa.plusMinutes(minutiFermo))) return;
-
     // Invia solo se il limite cambia
     if (amps == attuale) return;
-    if (amps == 0) fermoDa = now else fermoDa = null
+    if (amps == 0) {
+        fermoDa = now
+        stabileDa = null
+    } else {
+        fermoDa = null
+    }
     ultimoComando = now
     logInfo("rules prelievo", "Prelievo: " + prelievoW.intValue + " W, wallbox: " + wallboxW.intValue + " W, casa: " + casaW.intValue + " W, disponibile: " + disponibileW.intValue + " W, tensione: " + voltV.intValue + " V -> limite " + amps + " A")
     Wallbox_Limit.sendCommand(amps)
