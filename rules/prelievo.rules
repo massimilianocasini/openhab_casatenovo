@@ -18,6 +18,8 @@ var java.time.ZonedDateTime ultimoComando = null
 // Secondi dopo un cambio di limite in cui Wallbox_Power può essere ancora vecchio
 // (la wallbox lo manda ogni meterValueSampleInterval = 10 s)
 val int secondiAssestamento = 30
+// Se dopo il comando la wallbox non manda misure nuove, l'assestamento si prolunga fino a qui
+val int secondiMaxAssestamento = 180
 
 // Limiti della wallbox in A: sotto i 6 l'auto non carica, 30 A ≈ 7 kW.
 // Senza fotovoltaico il limite dei 4.5 kW tiene comunque la wallbox sotto i 19 A
@@ -143,8 +145,19 @@ then
         if (fermoDa !== null && now.isBefore(fermoDa.plusMinutes(minutiFermo))) return;
     }
 
+    // Assestamento: dopo un cambio di limite Wallbox_Power può essere vecchio. Dura almeno
+    // secondiAssestamento e, finché la wallbox non manda una misura presa dopo il comando
+    // (alla ripartenza da 0 A può tacere per oltre un minuto), fino a secondiMaxAssestamento
+    var boolean assestamento = false
+    if (ultimoComando !== null) {
+        val agg = Wallbox_Power.lastStateUpdate
+        val misuraNuova = agg !== null && agg.isAfter(ultimoComando.plusSeconds(15))
+        assestamento = now.isBefore(ultimoComando.plusSeconds(secondiAssestamento)) ||
+            (!misuraNuova && now.isBefore(ultimoComando.plusSeconds(secondiMaxAssestamento)))
+    }
+
     var int amps = attuale
-    if (ultimoComando !== null && now.isBefore(ultimoComando.plusSeconds(secondiAssestamento))) {
+    if (assestamento) {
         // Assestamento: Wallbox_Power può non essere ancora aggiornato, quindi si interviene solo
         // se il prelievo reale supera il contratto, togliendo esattamente l'eccesso
         if (prelievoW <= contrattoW) return;

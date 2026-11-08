@@ -1,0 +1,12 @@
+Available=Disponibile (cavo scollegato)
+Preparing=In preparazione
+Charging=In carica
+SuspendedEVSE=Sospesa dalla wallbox
+SuspendedEV=Sospesa dall'auto
+Finishing=Carica terminata
+Reserved=Riservata
+Unavailable=Non disponibile
+Faulted=Guasto
+NULL=Sconosciuto
+UNDEF=Sconosciuto
+=_source_
