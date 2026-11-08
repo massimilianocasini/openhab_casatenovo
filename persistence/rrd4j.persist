@@ -22,5 +22,7 @@ SE5000_AggregateDayConsumption,
 esp32c3d1_co2,
 esp32c3d1_tvoc,
 SE5000_Live_Production,
+Wallbox_Power,
+Wallbox_Limit,
 M_Total_Real_Power_Value 									: strategy = everyMinute, restoreOnStartup
 }
