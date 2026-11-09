@@ -48,7 +48,7 @@ rule "Network case"
                 }
             }
             else if (host.name == "Graziella") { //Dopo che Graziella esce la mattina spegni condizionatore soggiorno & letto
-                if (now.hour >= 7 && now.hour <= 9 && DaikinACUnit_Mode_Soggiorno.state == "HEAT" && DaikinACUnit_Power_Soggiorno.state == ON && (!isBankHoliday && !isWeekend)) {
+                if (now.hour >= 6 && now.hour <= 9 && DaikinACUnit_Mode_Soggiorno.state == "HEAT" && (DaikinACUnit_Power_Soggiorno.state == ON || DaikinACUnit_Power_Letto.state == ON) && (!isBankHoliday && !isWeekend)) {
                     DaikinACUnit_Power_Soggiorno.sendCommand(OFF)
                     DaikinACUnit_Power_Letto.sendCommand(OFF)
                     logInfo("Network case OFF", "Cond Soggiorno e Letto Spento perchè Graziella è uscita, il modo è HEAT e siamo tra le 7 e le 9 e non è festa e non è fine settimana")
@@ -58,7 +58,7 @@ rule "Network case"
                     }
             }
             else if (host.name == "Alice") { //Dopo che Alice esce la mattina spegni condizionatore cameretta e studio
-                if (now.hour >= 7 && now.hour <= 9 && DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON && (!isBankHoliday && !isWeekend )) {
+                if (now.hour >= 6 && now.hour <= 9 && DaikinACUnit_Mode_Cameretta.state == "HEAT" && DaikinACUnit_Power_Cameretta.state == ON && (!isBankHoliday && !isWeekend )) {
                     DaikinACUnit_Power_Cameretta.sendCommand(OFF)
                     DaikinACUnit_Power_Studio.sendCommand(OFF)
                     logInfo("Network case OFF", "Cond Cameretta Spento perchè Alice è assente, il modo è HEAT e siamo tra le 7 e le 9 e non è festa e non è fine settimana")            
