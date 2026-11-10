@@ -13,8 +13,13 @@ val double margineRipartenzaW = 300.0
 val int minutiStabile = 5
 // Da quando la potenza disponibile è continuamente sopra la soglia di ripartenza (null se non lo è)
 var java.time.ZonedDateTime stabileDa = null
+// true dal collegamento del cavo fino alla prima valutazione della carica: la prima partenza
+// avviene subito se la potenza basta, senza i minutiStabile
+var boolean inizioSessione = false
 // Momento dell'ultimo cambio di limite (null se nessuno)
 var java.time.ZonedDateTime ultimoComando = null
+// Ultimo limite inviato (null se nessuno)
+var Integer ultimoLimite = null
 // Secondi dopo un cambio di limite in cui Wallbox_Power può essere ancora vecchio
 // (la wallbox lo manda ogni meterValueSampleInterval = 10 s)
 val int secondiAssestamento = 30
@@ -123,14 +128,27 @@ then
 
     // Quanto resta alla wallbox entro i 4.5 kW di contratto
     val disponibileW = contrattoW - casaW
-    // Limite attuale (0 se non ancora noto)
+    // Limite attuale (0 se non ancora noto). Subito dopo un comando Wallbox_Limit può non essere
+    // ancora aggiornato, quindi durante l'assestamento vale l'ultimo limite inviato
     var int attuale = 0
     if (Wallbox_Limit.state instanceof QuantityType) {
         attuale = (Wallbox_Limit.state as QuantityType<Number>).intValue
     }
+    if (ultimoLimite !== null && ultimoComando !== null && now.isBefore(ultimoComando.plusSeconds(secondiAssestamento))) {
+        attuale = ultimoLimite
+    }
 
     // Ripartenza da 0 A: dopo almeno minutiFermo di fermo e solo se da minutiStabile minuti
     // la potenza disponibile resta sopra i 6 A più il margine
+    if (attuale == 0 && inizioSessione) {
+        // Prima valutazione dopo il collegamento del cavo: se la potenza basta si parte subito,
+        // senza attendere minutiStabile; altrimenti valgono le regole normali di ripartenza
+        inizioSessione = false
+        if (disponibileW >= ampsMin * voltV + margineRipartenzaW) {
+            logInfo("rules prelievo", "Cavo collegato, disponibile " + disponibileW.intValue + " W: partenza immediata")
+            stabileDa = now.minusMinutes(minutiStabile)
+        }
+    }
     if (attuale == 0) {
         if (disponibileW < ampsMin * voltV + margineRipartenzaW) {
             if (stabileDa !== null) logInfo("rules prelievo", "Disponibile sceso a " + disponibileW.intValue + " W: ripartenza annullata")
@@ -186,6 +204,37 @@ then
         fermoDa = null
     }
     ultimoComando = now
+    ultimoLimite = amps
     logInfo("rules prelievo", "Prelievo: " + prelievoW.intValue + " W, wallbox: " + wallboxW.intValue + " W, casa: " + casaW.intValue + " W, disponibile: " + disponibileW.intValue + " W, tensione: " + voltV.intValue + " V -> limite " + amps + " A")
     Wallbox_Limit.sendCommand(amps)
+end
+
+
+rule "Wallbox: limite a 0 A allo stacco del cavo"
+// A fine ricarica il limite torna a 0 A: alla carica successiva l'auto non parte con il vecchio
+// limite (che con la casa carica può superare subito il contratto), ma solo dopo che la regola
+// del prelievo ha verificato la potenza disponibile
+when
+    Item Wallbox_Cable changed to OFF
+then
+    logInfo("rules prelievo", "Cavo scollegato: limite portato a 0 A per la prossima carica")
+    inizioSessione = false
+    fermoDa = null
+    stabileDa = null
+    ultimoComando = now
+    ultimoLimite = 0
+    Wallbox_Limit.sendCommand(0)
+end
+
+rule "Wallbox: partenza immediata al collegamento del cavo"
+// Al collegamento la prima valutazione della regola del prelievo fa partire subito la carica
+// se la potenza disponibile basta per i 6 A più il margine (il comando avvia l'assestamento,
+// che copre il tempo in cui la wallbox non manda ancora misure)
+when
+    Item Wallbox_Cable changed to ON
+then
+    logInfo("rules prelievo", "Cavo collegato: partenza immediata se la potenza disponibile basta")
+    inizioSessione = true
+    fermoDa = null
+    stabileDa = null
 end
