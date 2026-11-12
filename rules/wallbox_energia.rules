@@ -1,0 +1,73 @@
+// Energia caricata dalla wallbox per periodo e contatore parziale azzerabile.
+// Wallbox_Energy è il contatore interno della wallbox (OCPP energy-active-import): non si può
+// azzerare, quindi i valori si ottengono come differenze rispetto a un valore di partenza.
+
+// Valori di Wallbox_Energy a inizio giorno, mese e anno (kWh), e giorno in cui sono stati letti:
+// la persistenza si interroga solo quando cambia il giorno, non a ogni misura (ogni ~5 s)
+var Double inizioOggi = null
+var Double inizioMese = null
+var Double inizioAnno = null
+var java.time.LocalDate giornoInizi = null
+
+rule "Wallbox: energia caricata per periodo e parziale"
+when
+    Item Wallbox_Energy changed or
+    Item Wallbox_Energy_Offset changed or
+    Time cron "5 0 0 * * ?" or          // a mezzanotte riparte il giorno (e mese/anno al cambio)
+    System reached start level 100
+then
+    if (!(Wallbox_Energy.state instanceof QuantityType)) return;
+    val double attuale = (Wallbox_Energy.state as QuantityType<Number>).toUnit("kWh").doubleValue
+
+    val giorno = now.toLocalDate
+    if (giornoInizi === null || giornoInizi != giorno || inizioOggi === null) {
+        // Per ogni periodo: lo stato a inizio periodo dalla persistenza; se lo storico non arriva
+        // così indietro, il primo valore salvato nel periodo; altrimenti il valore attuale
+        val inizi = newArrayList(giorno.atStartOfDay(now.zone), giorno.withDayOfMonth(1).atStartOfDay(now.zone), giorno.withDayOfYear(1).atStartOfDay(now.zone))
+        val valori = newArrayList
+        for (inizio : inizi) {
+            var double valore = attuale
+            val h = Wallbox_Energy.persistedState(inizio, "influxdb")
+            if (h !== null && h.state instanceof QuantityType) {
+                valore = (h.state as QuantityType<Number>).toUnit("kWh").doubleValue
+            } else {
+                val m = Wallbox_Energy.minimumSince(inizio, "influxdb")
+                if (m !== null && m.state instanceof QuantityType) {
+                    valore = (m.state as QuantityType<Number>).toUnit("kWh").doubleValue
+                }
+            }
+            if (valore > attuale) valore = attuale
+            valori.add(valore)
+        }
+        inizioOggi = valori.get(0)
+        inizioMese = valori.get(1)
+        inizioAnno = valori.get(2)
+        giornoInizi = giorno
+        logInfo("rules wallbox", "Energia a inizio giorno " + inizioOggi + ", mese " + inizioMese + ", anno " + inizioAnno + " kWh")
+    }
+    Wallbox_Energy_Oggi.postUpdate(new QuantityType<Number>(attuale - inizioOggi, Units.KILOWATT_HOUR))
+    Wallbox_Energy_Mese.postUpdate(new QuantityType<Number>(attuale - inizioMese, Units.KILOWATT_HOUR))
+    Wallbox_Energy_Anno.postUpdate(new QuantityType<Number>(attuale - inizioAnno, Units.KILOWATT_HOUR))
+
+    // Parziale: se l'offset non è mai stato impostato si parte da adesso
+    if (!(Wallbox_Energy_Offset.state instanceof QuantityType)) {
+        Wallbox_Energy_Offset.postUpdate(new QuantityType<Number>(attuale, Units.KILOWATT_HOUR))
+        Wallbox_Energy_Azzerato.postUpdate(new DateTimeType(now))
+        return;
+    }
+    val double offset = (Wallbox_Energy_Offset.state as QuantityType<Number>).toUnit("kWh").doubleValue
+    Wallbox_Energy_Parziale.postUpdate(new QuantityType<Number>(attuale - offset, Units.KILOWATT_HOUR))
+end
+
+rule "Wallbox: azzeramento energia parziale"
+when
+    Item Wallbox_Energy_Azzera received command ON
+then
+    if (!(Wallbox_Energy.state instanceof QuantityType)) {
+        logWarn("rules wallbox", "Azzeramento parziale non possibile: Wallbox_Energy non disponibile")
+        return;
+    }
+    logInfo("rules wallbox", "Energia parziale azzerata a " + Wallbox_Energy.state)
+    Wallbox_Energy_Offset.postUpdate(Wallbox_Energy.state)
+    Wallbox_Energy_Azzerato.postUpdate(new DateTimeType(now))
+end

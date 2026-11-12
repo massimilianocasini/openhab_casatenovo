@@ -17,3 +17,14 @@ Number:ElectricPotential Wallbox_Voltage "Voltage [%.0f V]" (gInfluxdbFast) ["Me
 
 Switch  Wallbox_Reset    "Reset charger"            { channel="ocpp:chargepoint:main:wallbox:reset" }
 Switch  Wallbox_Force_Stop "Force stop"
+
+// Energia caricata per periodo (calcolata da Wallbox_Energy con la persistenza InfluxDB)
+Number:Energy Wallbox_Energy_Oggi "Energia caricata oggi [%.2f kWh]"        (gInfluxdbChange) ["Measurement", "Energy"]
+Number:Energy Wallbox_Energy_Mese "Energia caricata questo mese [%.1f kWh]" (gInfluxdbChange) ["Measurement", "Energy"]
+Number:Energy Wallbox_Energy_Anno "Energia caricata quest'anno [%.1f kWh]"  (gInfluxdbChange) ["Measurement", "Energy"]
+
+// Contatore parziale azzerabile (come il parziale dei km): Wallbox_Energy meno l'offset salvato all'azzeramento
+Number:Energy Wallbox_Energy_Parziale "Energia parziale [%.2f kWh]"           (gInfluxdbChange) ["Measurement", "Energy"]
+Number:Energy Wallbox_Energy_Offset   "Energia all'azzeramento [%.2f kWh]"    (gMapDb)
+DateTime      Wallbox_Energy_Azzerato "Parziale azzerato il [%1$td/%1$tm/%1$tY %1$tH:%1$tM]" (gMapDb)
+Switch        Wallbox_Energy_Azzera   "Azzera energia parziale"               { autoupdate="false" }
