@@ -1,5 +1,5 @@
 String  Wallbox_Status   "Stato [MAP(ocpp_status.map):%s]" { channel="ocpp:connector:main:wallbox:c1:charge-point-status" }
-Switch  Wallbox_Cable    "Cable connected"          { channel="ocpp:connector:main:wallbox:c1:cable-connected" }
+Switch  Wallbox_Cable    "Cable connected [MAP(ocpp_status.map):%s]"          { channel="ocpp:connector:main:wallbox:c1:cable-connected" }
 Switch  Wallbox_Charging "Charging"             (gInfluxdbChange)    { channel="ocpp:connector:main:wallbox:c1:charging" }
 Number:ElectricCurrent Wallbox_Limit "Limit [%.0f A]" (gInfluxdbChange) { channel="ocpp:connector:main:wallbox:c1:charge-limit" }
 Number:Power Wallbox_Limit_Power "Limit Power [%.0f W]" (gInfluxdbChange) { channel="ocpp:connector:main:wallbox:c1:power-limit" }

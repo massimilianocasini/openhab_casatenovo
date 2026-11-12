@@ -1,4 +1,4 @@
-Available=Disponibile (cavo scollegato)
+Available=Disponibile
 Preparing=In preparazione
 Charging=In carica
 SuspendedEVSE=Sospesa dalla wallbox
@@ -10,3 +10,5 @@ Faulted=Guasto
 NULL=Sconosciuto
 UNDEF=Sconosciuto
 =_source_
+OFF=Cavo disconnesso
+ON=Cavo connesso
