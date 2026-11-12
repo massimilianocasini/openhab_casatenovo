@@ -1,5 +1,5 @@
 Bridge ocpp:server:main [ port=8887, meterValueSampleInterval=10 ] {
     Bridge chargepoint wallbox "Wallbox" [ chargePointId="wallbox" ] {
-        Thing connector c1 "Connector 1" [ connectorId=1 ]
+        Thing connector c1 "Connector 1" [ connectorId=1, refreshInterval=10 ]
     }
 }

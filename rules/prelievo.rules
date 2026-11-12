@@ -24,7 +24,7 @@ var Integer ultimoLimite = null
 // (la wallbox lo manda ogni meterValueSampleInterval = 10 s)
 val int secondiAssestamento = 30
 // Se dopo il comando la wallbox non manda misure nuove, l'assestamento si prolunga fino a qui
-val int secondiMaxAssestamento = 180
+val int secondiMaxAssestamento = 60
 
 // Limiti della wallbox in A: sotto i 6 l'auto non carica, 30 A ≈ 7 kW.
 // Senza fotovoltaico il limite dei 4.5 kW tiene comunque la wallbox sotto i 19 A
@@ -235,6 +235,9 @@ when
 then
     logInfo("rules prelievo", "Cavo collegato: partenza immediata se la potenza disponibile basta")
     inizioSessione = true
+    // Lo 0 A inviato allo stacco non deve tenere in assestamento la partenza
+    ultimoComando = null
+    ultimoLimite = null
     fermoDa = null
     stabileDa = null
 end
