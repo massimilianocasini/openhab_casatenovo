@@ -12,7 +12,7 @@ Switch  Wallbox_Pause    "Pause"                    { channel="ocpp:connector:ma
 // Number:ElectricPotential Wallbox_Voltage "Voltage [%.0f V]" (gInfluxdbChange) ["Measurement", "Voltage"] { channel="ocpp:connector:main:wallbox:c1:voltage-l1" }
 Number:Power  Wallbox_Power  "Power [%.0f W]"   (gInfluxdbChange)  ["Measurement", "Power"]  { channel="ocpp:connector:main:wallbox:c1:power-active-import" }
 Number:Energy Wallbox_Energy "Energy [%.2f kWh]"    (gInfluxdbChange)   ["Measurement", "Energy"]  { channel="ocpp:connector:main:wallbox:c1:energy-active-import" }
-Number:Energy Session_Energy "Session energy [%.2f kWh]" (gInfluxdbChange) ["Measurement", "Energy"]  { channel="ocpp:connector:main:wallbox:c1:session-energy" }
+Number:Energy Wallbox_Session_Energy "Session energy [%.2f kWh]" (gInfluxdbChange) ["Measurement", "Energy"]  { channel="ocpp:connector:main:wallbox:c1:session-energy" }
 Number:ElectricPotential Wallbox_Voltage "Voltage [%.0f V]" (gInfluxdbFast) ["Measurement", "Voltage"] { channel="ocpp:connector:main:wallbox:c1:voltage" }
 
 Switch  Wallbox_Reset    "Reset charger"            { channel="ocpp:chargepoint:main:wallbox:reset" }
