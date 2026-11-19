@@ -73,7 +73,7 @@ Group:Switch:OR(ON,OFF)   gPresence     "gPresence" <icon_presence>
                 Group gOfficeCondizionamento "Controllo condizionamento Studio" <climate> (gOffice) ["AirConditioner"]
                 Group gOfficeSpeaker "Speaker Studio" (gOffice) ["Speaker"]
                 Group gOfficeBlind "Tapparelle" (gOffice) ["Blinds"]
-                Group gOfficeTemp "Temperatura/Umidità" (gOffice) ["HVAC"]
+                Group gOfficeHVAC "Temperatura/Umidità" (gOffice) ["HVAC"]
                 Group gCleaningRobot "Roomba" (gOffice) ["CleaningRobot"]
         
             Group gBagnoVasca "Bagno" (gPianoterra) ["Bathroom"]
@@ -87,6 +87,7 @@ Group:Switch:OR(ON,OFF)   gPresence     "gPresence" <icon_presence>
                 Group gQuadroElettrico "Quadro Elettrico" (gLivingroom) ["Sensor"]
                 Group gLivingRoomBlind "Tapparelle" (gLivingroom) ["Blinds"]
                 Group gLivingroomHVAC "Temperatura/Umidità" (gLivingroom) ["HVAC"]
+                Group gLivingroomLight "Luce Soggiorno" <lightbulb> (gLivingroom) ["Lightbulb"]
                 Group gLivingroomMotion "IR Occhio" (gLivingroom) ["MotionDetector"]
                 Group gLivingroomTV "TV" (gLivingroom) ["Projector"]
                 Group gLivingSpeaker "Speaker Soggiorno" (gLivingroom) ["Speaker"]

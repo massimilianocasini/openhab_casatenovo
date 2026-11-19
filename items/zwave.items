@@ -29,8 +29,8 @@ Switch  FGBS001_007_AlarmGeneral2 "Alarm2" {channel="zwave:device:1f2db33fb0:nod
 Number:Temperature  FGBS001_007_SensorTemperature3_DS1820  "Temperatura Universal Bynary Garage[%.1f °C]" <temperature> (gFibaro3, gInfluxdb) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node7:sensor_temperature3"} 
 
 //FGMS001 Motion Sensor, Corridoio
-Number:Temperature FGMS001_008_Temp "Temperatura Occhio[%.1f °C]" <temperature> (gLivingroomMotion, gAvgTemperatura) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node8:sensor_temperature"}
-Number:Illuminance FGMS001_008_Lum "Luminosità Occhio [%.1f Lx]" <rgb> (gLivingroomMotion) ["Measurement", "Light"] {channel="zwave:device:1f2db33fb0:node8:sensor_luminance"}
+Number:Temperature FGMS001_008_Temp "Temperatura Occhio[%.1f °C]" <temperature> (gLivingroomHVAC, gAvgTemperatura) ["Measurement", "Temperature"] {channel="zwave:device:1f2db33fb0:node8:sensor_temperature"}
+Number:Illuminance FGMS001_008_Lum "Luminosità Occhio [%.1f Lx]" <rgb> (gLivingroomLight) ["Measurement", "Light"] {channel="zwave:device:1f2db33fb0:node8:sensor_luminance"}
 Switch FGMS001_008_All "IR Occhio" <motion> (gLivingroomMotion) ["Status"] {channel="zwave:device:1f2db33fb0:node8:alarm_motion", stateDescription="" [options="OFF=NOMotion, ON=Motion"]}
 Number FGMS001_008_Batt "Livello batteria Motion Occhio [%s %%]" <battery> (gLivingroomMotion, gBattery) ["Status", "Energy"] {channel="zwave:device:1f2db33fb0:node8:battery-level"}
 

@@ -1,0 +1,833 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "casatenovo-temp-media-ponderata",
+    "namespace": "default",
+    "uid": "04d9d102-acbc-4de6-a0cf-41b6892d5598",
+    "resourceVersion": "1795100995483996",
+    "generation": 10,
+    "creationTimestamp": "2026-11-19T08:25:54Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "2136497148137472"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:eeuw3nx695m2oc",
+      "grafana.app/saved-from-ui": "Grafana v13.3.1 (da3aa3ff57)",
+      "grafana.app/updatedBy": "user:eeuw3nx695m2oc",
+      "grafana.app/updatedTimestamp": "2026-11-19T15:09:55Z"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      },
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "datasource",
+            "version": "v0",
+            "datasource": {
+              "name": "grafana"
+            },
+            "spec": {
+              "queryType": "timeRegions",
+              "refId": "Anno",
+              "timeRegion": {
+                "from": "12:00",
+                "timezone": "Europe/Rome",
+                "to": "22:00"
+              }
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "dark-blue",
+          "name": "Orario programmato 12–22"
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Temperatura media ponderata — 4 locali",
+          "description": "Media dei 4 locali pesata sul volume: Corridoio (SonoOffT), Letto (SCD402_Temperature), Studio (SCD401_Temperature), Soggiorno (FGMS001_008_Temp). I volumi (m³) si impostano nelle caselle in cima alla dashboard; il totale è calcolato da solo. Per renderli definitivi salvare la dashboard. Ultimo campione per intervallo di visualizzazione, riempito col valore precedente (ricerca fino a 3 ore prima dell'intervallo). Gli istanti privi di almeno una temperatura sono esclusi.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "query": "import \"date\"\nimport \"timezone\"\nimport \"strings\"\n\noption location = timezone.location(name: \"Europe/Rome\")\n\n// Volumi (m³) dalle caselle in cima alla dashboard; accetta anche la virgola decimale\nvolume = (s) => float(v: strings.replaceAll(v: strings.trimSpace(v: s), t: \",\", u: \".\"))\nvCorridoio = volume(s: \"${vol_corridoio}\")\nvLetto = volume(s: \"${vol_letto}\")\nvStudio = volume(s: \"${vol_studio}\")\nvSoggiorno = volume(s: \"${vol_soggiorno}\")\nvTotale = vCorridoio + vLetto + vStudio + vSoggiorno\n\n// Ultimo campione per finestra, riempito col valore precedente.\n// Si leggono 3 ore prima dell'inizio intervallo perché alcuni item\n// sono persistiti solo al cambio di valore.\nsensore = (m, nome, peso, passo, fascia=false) =>\n    from(bucket: \"openhab\")\n        |> range(start: date.sub(d: 3h, from: v.timeRangeStart), stop: v.timeRangeStop)\n        |> filter(fn: (r) => r._measurement == m and r._field == \"value\")\n        |> aggregateWindow(every: passo, fn: last, createEmpty: true, timeSrc: \"_start\")\n        |> fill(usePrevious: true)\n        |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n        // Fascia 12:00 inclusa, 22:00 esclusa, ora di Roma (solo per il conteggio giornaliero)\n        |> filter(fn: (r) => not fascia or (date.hour(t: r._time) >= 12 and date.hour(t: r._time) < 22))\n        |> map(fn: (r) => ({_time: r._time, _field: nome, _value: float(v: r._value) * peso}))\n\nunion(tables: [\n    sensore(m: \"SonoOffT\", nome: \"Corridoio\", peso: vCorridoio, passo: v.windowPeriod),\n    sensore(m: \"SCD402_Temperature\", nome: \"Letto\", peso: vLetto, passo: v.windowPeriod),\n    sensore(m: \"SCD401_Temperature\", nome: \"Studio\", peso: vStudio, passo: v.windowPeriod),\n    sensore(m: \"FGMS001_008_Temp\", nome: \"Soggiorno\", peso: vSoggiorno, passo: v.windowPeriod),\n])\n    |> group()\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> filter(fn: (r) => exists r.Corridoio and exists r.Letto and exists r.Studio and exists r.Soggiorno)\n    |> map(fn: (r) => ({_time: r._time, \"Temperatura media ponderata\": (r.Corridoio + r.Letto + r.Studio + r.Soggiorno) / vTotale}))\n"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 500
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [
+                    "lastNotNull",
+                    "min",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "blue"
+                      },
+                      {
+                        "value": 19,
+                        "color": "green"
+                      },
+                      {
+                        "value": 21,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "°C",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "stepAfter",
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "axisSoftMax": 22,
+                    "axisSoftMin": 18,
+                    "fillOpacity": 0,
+                    "lineWidth": 2,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "area"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Superamenti giornalieri — fascia programmata 12–22",
+          "description": "Minuti con media dei 4 locali strettamente >21 °C, calcolati minuto per minuto. Fascia 12:00 inclusa, 22:00 esclusa, Europe/Rome. Risultati parziali per giorni tagliati dal selettore o in corso. Nessun dato non equivale a zero.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 3,
+                        "withTransforms": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Giorno"
+                  }
+                ],
+                "zebraStriping": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Giorno"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "time:YYYY-MM-DD"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Massima nella fascia (°C)"
+                    },
+                    "properties": [
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      },
+                      {
+                        "id": "unit",
+                        "value": "celsius"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Minuti sopra 21 °C — fascia 12–22",
+          "description": "Minuti con media dei 4 locali strettamente >21 °C, calcolati minuto per minuto. Fascia 12:00 inclusa, 22:00 esclusa, Europe/Rome. Risultati parziali per giorni tagliati dal selettore o in corso. Nessun dato non equivale a zero.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "query": "import \"date\"\nimport \"timezone\"\nimport \"strings\"\n\noption location = timezone.location(name: \"Europe/Rome\")\n\n// Volumi (m³) dalle caselle in cima alla dashboard; accetta anche la virgola decimale\nvolume = (s) => float(v: strings.replaceAll(v: strings.trimSpace(v: s), t: \",\", u: \".\"))\nvCorridoio = volume(s: \"${vol_corridoio}\")\nvLetto = volume(s: \"${vol_letto}\")\nvStudio = volume(s: \"${vol_studio}\")\nvSoggiorno = volume(s: \"${vol_soggiorno}\")\nvTotale = vCorridoio + vLetto + vStudio + vSoggiorno\n\n// Ultimo campione per finestra, riempito col valore precedente.\n// Si leggono 3 ore prima dell'inizio intervallo perché alcuni item\n// sono persistiti solo al cambio di valore.\nsensore = (m, nome, peso, passo, fascia=false) =>\n    from(bucket: \"openhab\")\n        |> range(start: date.sub(d: 3h, from: v.timeRangeStart), stop: v.timeRangeStop)\n        |> filter(fn: (r) => r._measurement == m and r._field == \"value\")\n        |> aggregateWindow(every: passo, fn: last, createEmpty: true, timeSrc: \"_start\")\n        |> fill(usePrevious: true)\n        |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n        // Fascia 12:00 inclusa, 22:00 esclusa, ora di Roma (solo per il conteggio giornaliero)\n        |> filter(fn: (r) => not fascia or (date.hour(t: r._time) >= 12 and date.hour(t: r._time) < 22))\n        |> map(fn: (r) => ({_time: r._time, _field: nome, _value: float(v: r._value) * peso}))\n\nunion(tables: [\n    sensore(m: \"SonoOffT\", nome: \"Corridoio\", peso: vCorridoio, passo: 1m, fascia: true),\n    sensore(m: \"SCD402_Temperature\", nome: \"Letto\", peso: vLetto, passo: 1m, fascia: true),\n    sensore(m: \"SCD401_Temperature\", nome: \"Studio\", peso: vStudio, passo: 1m, fascia: true),\n    sensore(m: \"FGMS001_008_Temp\", nome: \"Soggiorno\", peso: vSoggiorno, passo: 1m, fascia: true),\n])\n    |> group()\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> filter(fn: (r) => exists r.Corridoio and exists r.Letto and exists r.Studio and exists r.Soggiorno)\n    |> map(fn: (r) => ({_time: r._time, media: (r.Corridoio + r.Letto + r.Studio + r.Soggiorno) / vTotale}))\n    |> map(fn: (r) => ({r with giorno: date.truncate(t: r._time, unit: 1d), sopra: if r.media > 21.0 then 1 else 0}))\n    |> group(columns: [\"giorno\"])\n    |> reduce(\n        identity: {sopra: 0, valutabili: 0, massima: -1000.0},\n        fn: (r, accumulator) => ({\n            sopra: accumulator.sopra + r.sopra,\n            valutabili: accumulator.valutabili + 1,\n            massima: if r.media > accumulator.massima then r.media else accumulator.massima,\n        }),\n    )\n    |> group()\n    |> map(fn: (r) => ({Giorno: r.giorno, \"Minuti sopra 21 °C\": r.sopra, \"Minuti valutabili\": r.valutabili, \"Massima nella fascia (°C)\": r.massima}))\n    |> sort(columns: [\"Giorno\"])\n"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Minuti valutabili": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "barRadius": 0,
+                "barWidth": 0.97,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "orientation": "auto",
+                "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xField": "Giorno",
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Minuti sopra 21 °C"
+                    },
+                    "properties": [
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      },
+                      {
+                        "id": "custom.axisLabel",
+                        "value": "Minuti"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Massima nella fascia (°C)"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.axisPlacement",
+                        "value": "right"
+                      },
+                      {
+                        "id": "custom.axisLabel",
+                        "value": "Temperatura massima"
+                      },
+                      {
+                        "id": "unit",
+                        "value": "celsius"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.axisSoftMin",
+                        "value": 18
+                      },
+                      {
+                        "id": "custom.axisSoftMax",
+                        "value": 22
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Giorno"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "time:YYYY-MM-DD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Contributo delle stanze alla temperatura media ponderata",
+          "description": "Media dei 4 locali pesata sul volume: Corridoio (SonoOffT), Letto (SCD402_Temperature), Studio (SCD401_Temperature), Soggiorno (FGMS001_008_Temp). I volumi (m³) si impostano nelle caselle in cima alla dashboard; il totale è calcolato da solo. Per renderli definitivi salvare la dashboard. Ultimo campione per intervallo di visualizzazione, riempito col valore precedente (ricerca fino a 3 ore prima dell'intervallo). Gli istanti privi di almeno una temperatura sono esclusi. Ogni banda è temperatura × volume / volume totale: la cima della pila coincide con la media ponderata.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${DS}"
+                      },
+                      "spec": {
+                        "query": "import \"date\"\nimport \"timezone\"\nimport \"strings\"\n\noption location = timezone.location(name: \"Europe/Rome\")\n\n// Volumi (m³) dalle caselle in cima alla dashboard; accetta anche la virgola decimale\nvolume = (s) => float(v: strings.replaceAll(v: strings.trimSpace(v: s), t: \",\", u: \".\"))\nvCorridoio = volume(s: \"${vol_corridoio}\")\nvLetto = volume(s: \"${vol_letto}\")\nvStudio = volume(s: \"${vol_studio}\")\nvSoggiorno = volume(s: \"${vol_soggiorno}\")\nvTotale = vCorridoio + vLetto + vStudio + vSoggiorno\n\n// Ultimo campione per finestra, riempito col valore precedente.\n// Si leggono 3 ore prima dell'inizio intervallo perché alcuni item\n// sono persistiti solo al cambio di valore.\nsensore = (m, nome, peso, passo, fascia=false) =>\n    from(bucket: \"openhab\")\n        |> range(start: date.sub(d: 3h, from: v.timeRangeStart), stop: v.timeRangeStop)\n        |> filter(fn: (r) => r._measurement == m and r._field == \"value\")\n        |> aggregateWindow(every: passo, fn: last, createEmpty: true, timeSrc: \"_start\")\n        |> fill(usePrevious: true)\n        |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n        // Fascia 12:00 inclusa, 22:00 esclusa, ora di Roma (solo per il conteggio giornaliero)\n        |> filter(fn: (r) => not fascia or (date.hour(t: r._time) >= 12 and date.hour(t: r._time) < 22))\n        |> map(fn: (r) => ({_time: r._time, _field: nome, _value: float(v: r._value) * peso}))\n\nunion(tables: [\n    sensore(m: \"SonoOffT\", nome: \"Corridoio\", peso: vCorridoio / vTotale, passo: v.windowPeriod),\n    sensore(m: \"SCD402_Temperature\", nome: \"Letto\", peso: vLetto / vTotale, passo: v.windowPeriod),\n    sensore(m: \"SCD401_Temperature\", nome: \"Studio\", peso: vStudio / vTotale, passo: v.windowPeriod),\n    sensore(m: \"FGMS001_008_Temp\", nome: \"Soggiorno\", peso: vSoggiorno / vTotale, passo: v.windowPeriod),\n])\n    |> group()\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> filter(fn: (r) => exists r.Corridoio and exists r.Letto and exists r.Studio and exists r.Soggiorno)\n    |> keep(columns: [\"_time\", \"Corridoio\", \"Letto\", \"Studio\", \"Soggiorno\"])\n"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 500
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [
+                    "lastNotNull",
+                    "min",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 1,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "blue"
+                      },
+                      {
+                        "value": 19,
+                        "color": "green"
+                      },
+                      {
+                        "value": 21,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic-by-name"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "°C",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "stepAfter",
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "axisSoftMax": 22,
+                    "axisSoftMin": 0,
+                    "fillOpacity": 70,
+                    "lineWidth": 1,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "normal"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Letto"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Corridoio"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 9,
+              "width": 24,
+              "height": 13,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 22,
+              "width": 24,
+              "height": 20,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 42,
+              "width": 24,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "openhab",
+      "temperatura"
+    ],
+    "timeSettings": {
+      "timezone": "Europe/Rome",
+      "from": "now-24h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Temperatura media ponderata — Corridoio, Letto, Studio, Soggiorno",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "DS",
+          "pluginId": "influxdb",
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "InfluxDB (Flux)",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "vol_corridoio",
+          "label": "Volume Corridoio (m³)",
+          "query": "27",
+          "current": {
+            "text": "27",
+            "value": "27"
+          },
+          "description": "Volume in m³ di Corridoio (SonoOffT), usato come peso nella media",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "vol_letto",
+          "label": "Volume Letto (m³)",
+          "query": "27",
+          "current": {
+            "text": "27",
+            "value": "27"
+          },
+          "description": "Volume in m³ di Letto (SCD402_Temperature), usato come peso nella media",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "vol_studio",
+          "label": "Volume Studio (m³)",
+          "query": "27",
+          "current": {
+            "text": "27",
+            "value": "27"
+          },
+          "description": "Volume in m³ di Studio (SCD401_Temperature), usato come peso nella media",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "vol_soggiorno",
+          "label": "Volume Soggiorno (m³)",
+          "query": "27",
+          "current": {
+            "text": "27",
+            "value": "27"
+          },
+          "description": "Volume in m³ di Soggiorno (FGMS001_008_Temp), usato come peso nella media",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      }
+    ],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}
