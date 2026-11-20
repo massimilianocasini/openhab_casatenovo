@@ -1,28 +1,15 @@
-Strategies 
+// rrd4j disattivato (20/11/2026): tutti gli item erano già persistiti anche su InfluxDB
+// (vedi influxdb.persist) e rrd4j riscriveva 19 file .rrd sulla SD ogni minuto.
+// Il servizio predefinito ora è influxdb (services/runtime.cfg).
+// NON cancellare questo file: senza .persist rrd4j salverebbe TUTTI gli item ogni minuto.
+// Per riattivarlo basta rimettere qui gli item, per esempio:
+//   SCD401_Temperature, Power_Used : strategy = everyMinute, restoreOnStartup
+
+Strategies
 {
 	everyMinute : "0 * * * * ?"
-	everyHour : "0 0 * * * ?"
-	everyDay : "0 0 0 * * ?"
 }
 
-Items { 
-SCD401_Temperature, 
-SCD401_Humidity, 
-SCD402_Temperature,
-SCD402_Humidity, 
-SonoOffT, 
-SonoOffH,
-FGMS001_008_Temp,
-ContatoreAcqua,
-OneCallAPIweatherandforecast_Current_Temperature,
-Power_Used,
-I_AC_Power_Value,
-SE5000_AggregateDayProduction,
-SE5000_AggregateDayConsumption,
-esp32c3d1_co2,
-esp32c3d1_tvoc,
-SE5000_Live_Production,
-Wallbox_Power,
-Wallbox_Limit,
-M_Total_Real_Power_Value 									: strategy = everyMinute, restoreOnStartup
+Items
+{
 }
